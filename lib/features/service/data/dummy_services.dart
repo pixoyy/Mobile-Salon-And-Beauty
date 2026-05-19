@@ -1,0 +1,78 @@
+import 'service_model.dart';
+
+class DummyServices {
+  static const List<ServiceModel> data = [
+    ServiceModel(
+      id: 'svc-001',
+      name: 'Haircut Basic',
+      category: 'Haircut',
+      description: 'Potong rambut basic sesuai bentuk wajah.',
+      durationMinutes: 45,
+      price: 95000,
+      isPopular: true,
+    ),
+    ServiceModel(
+      id: 'svc-002',
+      name: 'Haircut + Blow',
+      category: 'Haircut',
+      description: 'Potong rambut dan blow untuk hasil lebih rapi.',
+      durationMinutes: 60,
+      price: 135000,
+      isPopular: true,
+    ),
+    ServiceModel(
+      id: 'svc-003',
+      name: 'Hair Coloring Full',
+      category: 'Coloring',
+      description: 'Pewarnaan rambut full dengan pilihan warna premium.',
+      durationMinutes: 180,
+      price: 450000,
+      isPopular: true,
+    ),
+    ServiceModel(
+      id: 'svc-004',
+      name: 'Balayage Package',
+      category: 'Coloring',
+      description: 'Teknik balayage natural termasuk toning.',
+      durationMinutes: 210,
+      price: 650000,
+      isPopular: true,
+    ),
+    ServiceModel(
+      id: 'svc-005',
+      name: 'Hair Spa Relax',
+      category: 'Treatment',
+      description: 'Perawatan rambut dan kulit kepala dengan cream spa.',
+      durationMinutes: 75,
+      price: 175000,
+      isPopular: false,
+    ),
+    ServiceModel(
+      id: 'svc-006',
+      name: 'Keratin Treatment',
+      category: 'Treatment',
+      description: 'Nutrisi intensif untuk rambut halus dan mudah diatur.',
+      durationMinutes: 120,
+      price: 390000,
+      isPopular: true,
+    ),
+    ServiceModel(
+      id: 'svc-007',
+      name: 'Scalp Detox',
+      category: 'Treatment',
+      description: 'Deep cleansing untuk kulit kepala berminyak.',
+      durationMinutes: 60,
+      price: 145000,
+      isPopular: false,
+    ),
+    ServiceModel(
+      id: 'svc-008',
+      name: 'Bridal Hairdo',
+      category: 'Styling',
+      description: 'Styling rambut bridal termasuk aksesori dasar.',
+      durationMinutes: 150,
+      price: 520000,
+      isPopular: false,
+    ),
+  ];
+}

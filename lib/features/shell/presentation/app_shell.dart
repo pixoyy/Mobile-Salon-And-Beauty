@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../dashboard/presentation/dashboard_page.dart';
+import '../../stylist/presentation/stylist_list_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
@@ -15,11 +16,7 @@ class _AppShellState extends State<AppShell> {
 
   static const List<Widget> _pages = <Widget>[
     DashboardPage(),
-    _PlaceholderPage(
-      title: 'Stylist',
-      subtitle: 'Phase berikutnya akan memuat list stylist dan detailnya.',
-      icon: Icons.face_retouching_natural,
-    ),
+    StylistListPage(),
     _PlaceholderPage(
       title: 'Layanan',
       subtitle: 'Phase berikutnya akan memuat daftar layanan salon.',
