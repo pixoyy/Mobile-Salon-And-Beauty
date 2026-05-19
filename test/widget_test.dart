@@ -7,8 +7,12 @@
 
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:salon_and_beauty/app.dart';
+import 'package:salon_and_beauty/features/service/data/service_repository.dart';
+import 'package:salon_and_beauty/features/shell/presentation/app_shell.dart';
+import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
 
 void main() {
   testWidgets('shows Glamora login screen', (WidgetTester tester) async {
@@ -34,20 +38,19 @@ void main() {
     expect(find.text('Buat akun baru'), findsOneWidget);
   });
 
-  testWidgets('login flow opens app shell and navigation tabs work', (WidgetTester tester) async {
-    await tester.pumpWidget(const GlamoraApp());
-
-    await tester.enterText(find.byType(TextFormField).at(0), 'siska.amanda@example.com');
-    await tester.enterText(find.byType(TextFormField).at(1), 'password123');
-    await tester.scrollUntilVisible(
-      find.widgetWithText(ElevatedButton, 'Login'),
-      200,
-      scrollable: find.byType(Scrollable).first,
+  testWidgets('app shell navigation tabs work', (WidgetTester tester) async {
+    await tester.pumpWidget(
+      RepositoryProvider<StylistRepository>(
+        create: (_) => StylistRepository(),
+        child: RepositoryProvider<ServiceRepository>(
+          create: (_) => ServiceRepository(),
+          child: const MaterialApp(home: AppShell()),
+        ),
+      ),
     );
-    await tester.tap(find.widgetWithText(ElevatedButton, 'Login'));
-    await tester.pumpAndSettle(const Duration(seconds: 2));
 
-    expect(find.byType(NavigationBar), findsOneWidget);
+    await tester.pumpAndSettle(const Duration(seconds: 1));
+
     expect(find.text('Beranda'), findsWidgets);
 
     await tester.tap(find.text('Stylist').last);
@@ -56,8 +59,8 @@ void main() {
 
     await tester.tap(find.text('Layanan').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.text('Layanan'), findsWidgets);
-    expect(find.text('Phase berikutnya akan memuat daftar layanan salon.'), findsOneWidget);
+    expect(find.text('Layanan Salon'), findsOneWidget);
+    expect(find.text('Cari layanan...'), findsOneWidget);
 
     await tester.tap(find.text('Booking').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));

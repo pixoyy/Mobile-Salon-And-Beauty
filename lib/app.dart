@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/login_page.dart';
+import 'features/service/data/service_repository.dart';
 import 'features/stylist/data/stylist_repository.dart';
 
 class GlamoraApp extends StatelessWidget {
@@ -10,8 +11,11 @@ class GlamoraApp extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return RepositoryProvider<StylistRepository>(
-      create: (_) => StylistRepository(),
+    return MultiRepositoryProvider(
+      providers: [
+        RepositoryProvider<StylistRepository>(create: (_) => StylistRepository()),
+        RepositoryProvider<ServiceRepository>(create: (_) => ServiceRepository()),
+      ],
       child: MaterialApp(
         title: 'Glamora Salon & Beauty',
         debugShowCheckedModeBanner: false,
