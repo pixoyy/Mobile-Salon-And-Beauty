@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../bloc/stylist_cubit.dart';
+import '../../booking/presentation/booking_schedule_page.dart';
 import '../data/stylist_model.dart';
 import '../data/stylist_repository.dart';
 
@@ -66,9 +67,7 @@ class _StylistDetailView extends StatelessWidget {
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
                       onPressed: () {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Flow booking akan aktif di Phase 4.')),
-                        );
+                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => BookingSchedulePage(prefillStylistId: stylist.id)));
                       },
                       icon: const Icon(Icons.calendar_month_outlined),
                       label: const Text('Book Stylist'),

@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../bloc/service_cubit.dart';
 import '../data/service_model.dart';
 import '../data/service_repository.dart';
+import 'service_detail_page.dart';
 
 class ServiceListPage extends StatelessWidget {
   const ServiceListPage({super.key});
@@ -67,17 +68,6 @@ class _ServiceListViewState extends State<_ServiceListView> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Layanan Salon'),
-            actions: [
-              IconButton(
-                tooltip: 'Booking',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Flow booking akan hadir di Phase 4.')),
-                  );
-                },
-                icon: const Icon(Icons.shopping_bag_outlined),
-              ),
-            ],
           ),
           body: SafeArea(
             child: Column(
@@ -172,9 +162,9 @@ class _ServiceListViewState extends State<_ServiceListView> {
                               return _ServiceCard(
                                 service: service,
                                 onTap: () {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text('"${service.name}" akan masuk ke flow booking di Phase 4.'),
+                                  Navigator.of(context).push(
+                                    MaterialPageRoute(
+                                      builder: (_) => ServiceDetailPage(serviceId: service.id),
                                     ),
                                   );
                                 },

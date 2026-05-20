@@ -10,6 +10,8 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import 'package:salon_and_beauty/app.dart';
+import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
 import 'package:salon_and_beauty/features/service/data/service_repository.dart';
 import 'package:salon_and_beauty/features/shell/presentation/app_shell.dart';
 import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
@@ -39,12 +41,23 @@ void main() {
   });
 
   testWidgets('app shell navigation tabs work', (WidgetTester tester) async {
+    final ServiceRepository serviceRepository = ServiceRepository();
+
     await tester.pumpWidget(
       RepositoryProvider<StylistRepository>(
         create: (_) => StylistRepository(),
         child: RepositoryProvider<ServiceRepository>(
-          create: (_) => ServiceRepository(),
-          child: const MaterialApp(home: AppShell()),
+          create: (_) => serviceRepository,
+          child: RepositoryProvider<BookingRepository>(
+            create: (_) => BookingRepository(),
+            child: BlocProvider<BookingCubit>(
+              create: (context) => BookingCubit(
+                context.read<BookingRepository>(),
+                serviceRepository,
+              ),
+              child: const MaterialApp(home: AppShell()),
+            ),
+          ),
         ),
       ),
     );
@@ -64,8 +77,8 @@ void main() {
 
     await tester.tap(find.text('Booking').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.text('Booking'), findsWidgets);
-    expect(find.text('Phase berikutnya akan memuat booking schedule dan checkout.'), findsOneWidget);
+    expect(find.text('Booking Schedule'), findsOneWidget);
+    expect(find.text('1. Pilih Stylist'), findsOneWidget);
 
     await tester.tap(find.text('Akun').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
