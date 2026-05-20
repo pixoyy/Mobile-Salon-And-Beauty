@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../../core/theme/app_colors.dart';
-import '../../customer/data/dummy_customers.dart';
+import '../../user/data/dummy_user.dart';
 import 'booking_detail_page.dart';
 import '../../service/data/service_model.dart';
 import '../../stylist/data/stylist_model.dart';
@@ -71,14 +71,14 @@ class _CheckoutView extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        DummyCustomers.activeCustomer.name,
+                        DummyUser.activeCustomer.name,
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               fontWeight: FontWeight.w700,
                             ),
                       ),
                       const SizedBox(height: 4),
-                      Text(DummyCustomers.activeCustomer.email),
-                      Text(DummyCustomers.activeCustomer.phone),
+                      Text(DummyUser.activeCustomer.email),
+                      // Text(DummyCustomers.activeCustomer.phone),
                     ],
                   ),
                 ),

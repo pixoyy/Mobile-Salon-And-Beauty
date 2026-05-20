@@ -13,7 +13,7 @@ class BookingRepository {
     _initializeDummyBookings();
   }
 
-  static const String _activeCustomerId = 'cus-001';
+  static const String _activeCustomerId = 'demo-001';
   static const int _startHour = 9;
   static const int _endHour = 17;
 
@@ -29,6 +29,20 @@ class BookingRepository {
       ..addAll(DummyBookings.history);
   }
 
+  Future<List<BookingModel>> getAllBookings({String? customerId}) async {
+    await Future<void>.delayed(const Duration(milliseconds: 220));
+
+    final String targetCustomerId = customerId ?? _activeCustomerId;
+
+    final List<BookingModel> filtered = _bookings
+        .where((booking) => booking.customerId == targetCustomerId)
+        .toList(growable: false);
+
+    filtered.sort((a, b) => b.bookingDateTime.compareTo(a.bookingDateTime));
+
+    return filtered;
+  }
+
   Future<BookingModel?> getBookingById(String id) async {
     await Future<void>.delayed(const Duration(milliseconds: 160));
 
@@ -39,22 +53,6 @@ class BookingRepository {
     }
 
     return null;
-  }
-
-  Future<List<BookingModel>> getAllBookings({String? customerId}) async {
-    await Future<void>.delayed(const Duration(milliseconds: 220));
-
-    final String targetCustomerId = customerId ?? _activeCustomerId;
-
-    final List<BookingModel> filtered = _bookings
-        .where((booking) => booking.customerId == targetCustomerId)
-        .toList(growable: false);
-
-    filtered.sort(
-      (a, b) => b.bookingDateTime.compareTo(a.bookingDateTime),
-    );
-
-    return filtered;
   }
 
   Future<BookingModel> createBooking(BookingModel booking) async {
@@ -70,7 +68,9 @@ class BookingRepository {
       throw StateError('Slot tidak tersedia untuk stylist terpilih.');
     }
 
-    final String bookingId = booking.id.trim().isEmpty ? _generateBookingId() : booking.id;
+    final String bookingId = booking.id.trim().isEmpty
+        ? _generateBookingId()
+        : booking.id;
     final BookingModel savedBooking = booking.copyWith(id: bookingId);
 
     _bookings.add(savedBooking);
@@ -128,8 +128,8 @@ class BookingRepository {
               _isSameDate(booking.bookingDate, date) &&
               booking.status != BookingStatus.cancelled,
         )
-      .map((booking) => _normalizeTime(booking.bookingTime))
-      .whereType<String>()
+        .map((booking) => _normalizeTime(booking.bookingTime))
+        .whereType<String>()
         .toSet()
         .toList(growable: false);
 
@@ -147,7 +147,8 @@ class BookingRepository {
     await Future<void>.delayed(const Duration(milliseconds: 140));
 
     final String? normalizedTime = _normalizeTime(time);
-    if (normalizedTime == null || !_buildDefaultSlots().contains(normalizedTime)) {
+    if (normalizedTime == null ||
+        !_buildDefaultSlots().contains(normalizedTime)) {
       return false;
     }
 
@@ -161,7 +162,8 @@ class BookingRepository {
         continue;
       }
 
-      final bool hasConflict = booking.stylistId == stylistId &&
+      final bool hasConflict =
+          booking.stylistId == stylistId &&
           _isSameDate(booking.bookingDate, date) &&
           existingTime == normalizedTime &&
           booking.status != BookingStatus.cancelled;
@@ -193,21 +195,21 @@ class BookingRepository {
         stylist.id: stylist.name.toLowerCase(),
     };
 
-    final List<BookingModel> results = _bookings.where((booking) {
-      if (booking.customerId != targetCustomerId) {
-        return false;
-      }
+    final List<BookingModel> results = _bookings
+        .where((booking) {
+          if (booking.customerId != targetCustomerId) {
+            return false;
+          }
 
-      final String stylistName = stylistNamesById[booking.stylistId] ?? '';
-      final String dateText = _formatDate(booking.bookingDate);
+          final String stylistName = stylistNamesById[booking.stylistId] ?? '';
+          final String dateText = _formatDate(booking.bookingDate);
 
-      return stylistName.contains(normalizedQuery) ||
-          dateText.contains(normalizedQuery);
-    }).toList(growable: false);
+          return stylistName.contains(normalizedQuery) ||
+              dateText.contains(normalizedQuery);
+        })
+        .toList(growable: false);
 
-    results.sort(
-      (a, b) => b.bookingDateTime.compareTo(a.bookingDateTime),
-    );
+    results.sort((a, b) => b.bookingDateTime.compareTo(a.bookingDateTime));
 
     return results;
   }

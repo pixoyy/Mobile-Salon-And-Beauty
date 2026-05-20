@@ -1,4 +1,6 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/core/session/auth_session.dart';
+import 'package:salon_and_beauty/features/user/data/user_model.dart';
 
 import '../data/auth_repository.dart';
 import '../data/user_model.dart';
@@ -6,25 +8,21 @@ import '../data/user_model.dart';
 enum AuthStatus { initial, loading, authenticated, failure }
 
 class AuthState {
-  const AuthState({
-    required this.status,
-    this.errorMessage,
-    this.currentUser,
-  });
+  const AuthState({required this.status, this.errorMessage, this.currentUser});
 
   const AuthState.initial()
-      : status = AuthStatus.initial,
-        errorMessage = null,
-        currentUser = null;
+    : status = AuthStatus.initial,
+      errorMessage = null,
+      currentUser = null;
 
   final AuthStatus status;
   final String? errorMessage;
-  final User? currentUser;
+  final UserModel? currentUser;
 
   AuthState copyWith({
     AuthStatus? status,
     String? errorMessage,
-    User? currentUser,
+    UserModel? currentUser,
   }) {
     return AuthState(
       status: status ?? this.status,
@@ -53,16 +51,19 @@ class AuthCubit extends Cubit<AuthState> {
     );
 
     if (user != null) {
-      emit(AuthState(
-        status: AuthStatus.authenticated,
-        currentUser: user,
-      ));
+      // SAVE SESSION
+      AuthSession.currentUser = user;
+
+      emit(AuthState(status: AuthStatus.authenticated, currentUser: user));
+
       return;
     }
 
-    emit(const AuthState(
-      status: AuthStatus.failure,
-      errorMessage: 'Email/username atau password tidak valid.',
-    ));
+    emit(
+      const AuthState(
+        status: AuthStatus.failure,
+        errorMessage: 'Email/username atau password tidak valid.',
+      ),
+    );
   }
 }

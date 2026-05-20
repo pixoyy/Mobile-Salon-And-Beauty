@@ -1,6 +1,7 @@
-import 'dummy_customer.dart';
+import 'package:salon_and_beauty/features/user/data/dummy_user.dart';
+import 'package:salon_and_beauty/features/user/data/user_model.dart';
+
 import 'register_result.dart';
-import 'user_model.dart';
 
 class AuthRepository {
   static final AuthRepository _instance = AuthRepository._internal();
@@ -13,13 +14,13 @@ class AuthRepository {
     _initializeDummyUser();
   }
 
-  final List<User> _registeredUsers = [];
+  final List<UserModel> _registeredUsers = [];
 
   void _initializeDummyUser() {
-    _registeredUsers.add(DummyCustomer.demo);
+    _registeredUsers.add(DummyUser.activeCustomer);
   }
 
-  User? validateLogin({
+  UserModel? validateLogin({
     required String identifier,
     required String password,
   }) {
@@ -29,7 +30,9 @@ class AuthRepository {
 
     try {
       final user = _registeredUsers.firstWhere(
-        (u) => (u.email == identifier || u.name == identifier) && u.password == password,
+        (u) =>
+            (u.email == identifier || u.name == identifier) &&
+            u.password == password,
       );
       return user;
     } catch (e) {
@@ -59,7 +62,7 @@ class AuthRepository {
       return RegisterResult.failure('Email sudah terdaftar');
     }
 
-    final newUser = User(
+    final newUser = UserModel(
       id: 'user_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       email: email,

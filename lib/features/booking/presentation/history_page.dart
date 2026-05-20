@@ -55,7 +55,7 @@ class _HistoryPageState extends State<HistoryPage> {
         _items = items;
         _stylistNameById = {
           for (final stylist in stylists) stylist.id as String: stylist.name as String,
-        };
+       };
         _stylistPhotoById = {
           for (final stylist in stylists) stylist.id as String: stylist.photoUrl as String,
         };
