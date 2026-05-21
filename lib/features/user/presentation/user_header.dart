@@ -3,12 +3,14 @@ import 'package:flutter/material.dart';
 class UserHeader extends StatelessWidget {
   final String name;
   final String email;
+  final String? phone;
   final String? imageUrl;
 
   const UserHeader({
     super.key,
     required this.name,
     required this.email,
+    required this.phone,
     this.imageUrl,
   });
 

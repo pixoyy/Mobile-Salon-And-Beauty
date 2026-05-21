@@ -28,6 +28,7 @@ class _RegisterViewState extends State<_RegisterView> {
   final GlobalKey<FormState> _formKey = GlobalKey<FormState>();
   final TextEditingController _nameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
@@ -37,6 +38,7 @@ class _RegisterViewState extends State<_RegisterView> {
   void dispose() {
     _nameController.dispose();
     _emailController.dispose();
+    _phoneController.dispose();
     _passwordController.dispose();
     _confirmPasswordController.dispose();
     super.dispose();
@@ -51,6 +53,7 @@ class _RegisterViewState extends State<_RegisterView> {
     context.read<RegisterCubit>().submitRegister(
           name: _nameController.text,
           email: _emailController.text,
+          phone: _phoneController.text,
           password: _passwordController.text,
         );
   }
@@ -142,6 +145,20 @@ class _RegisterViewState extends State<_RegisterView> {
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Email wajib diisi';
+                                }
+                                return null;
+                              },
+                            ),
+                            const SizedBox(height: 16),
+                            TextFormField(
+                              controller: _phoneController,
+                              decoration: const InputDecoration(
+                                labelText: 'Nomor Telepon',
+                                prefixIcon: Icon(Icons.phone_outlined),
+                              ),
+                              validator: (value) {
+                                if (value == null || value.trim().isEmpty) {
+                                  return 'Nomor telepon wajib diisi';
                                 }
                                 return null;
                               },
