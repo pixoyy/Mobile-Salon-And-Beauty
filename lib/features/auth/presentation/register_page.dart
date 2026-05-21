@@ -33,6 +33,7 @@ class _RegisterViewState extends State<_RegisterView> {
   final TextEditingController _confirmPasswordController = TextEditingController();
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
+  
 
   @override
   void dispose() {
@@ -43,6 +44,8 @@ class _RegisterViewState extends State<_RegisterView> {
     _confirmPasswordController.dispose();
     super.dispose();
   }
+
+  
 
   void _submit() {
     final isValid = _formKey.currentState?.validate() ?? false;
@@ -146,6 +149,12 @@ class _RegisterViewState extends State<_RegisterView> {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Email wajib diisi';
                                 }
+                                final email = value.trim();
+                                // final emailRegex = RegExp(r'^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}$');
+                                final emailRegex = RegExp(r"^[a-zA-Z0-9.a-zA-Z0-9.!#$%&'*+-/=?^_`{|}~]+@[a-zA-Z0-9]+\.[a-zA-Z]+");
+                                if (!emailRegex.hasMatch(email)) {
+                                  return 'Format email tidak valid';
+                                }
                                 return null;
                               },
                             ),
@@ -156,9 +165,21 @@ class _RegisterViewState extends State<_RegisterView> {
                                 labelText: 'Nomor Telepon',
                                 prefixIcon: Icon(Icons.phone_outlined),
                               ),
+                              keyboardType: TextInputType.phone,
                               validator: (value) {
                                 if (value == null || value.trim().isEmpty) {
                                   return 'Nomor telepon wajib diisi';
+                                }
+                                final phone = value.trim();
+                                final digitOnly = RegExp(r'^[0-9]+$');
+                                if (!digitOnly.hasMatch(phone)) {
+                                  return 'Nomor telepon hanya boleh berisi angka';
+                                }
+                                if (phone.length < 10) {
+                                  return 'Nomor telepon minimal 10 digit';
+                                }
+                                if (phone.length > 12) {
+                                  return 'Nomor telepon maksimal 12 digit';
                                 }
                                 return null;
                               },
