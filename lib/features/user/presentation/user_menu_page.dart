@@ -5,6 +5,7 @@ import 'package:salon_and_beauty/core/theme/app_colors.dart';
 import 'package:salon_and_beauty/features/auth/presentation/login_page.dart';
 import 'package:salon_and_beauty/features/user/bloc/user_bloc.dart';
 import 'package:salon_and_beauty/features/user/data/user_repository.dart';
+import 'package:salon_and_beauty/features/user/presentation/edit_profile_page.dart';
 
 class UserMenuPage extends StatelessWidget {
   const UserMenuPage({super.key});
@@ -60,7 +61,28 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.person_outline_rounded,
                                   title: 'Edit Profile',
                                   subtitle: 'Ubah informasi profile Anda',
-                                  onTap: () {},
+                                  // onTap: () {
+                                  //   Navigator.push(
+                                  //     context,
+                                  //     MaterialPageRoute(
+                                  //       builder: (_) => const EditProfilePage(),
+                                  //     ),
+                                  //   );
+                                  // },
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const EditProfilePage(),
+                                      ),
+                                    );
+
+                                    if (result == true && context.mounted) {
+                                      context.read<UserBloc>().add(
+                                        LoadUserEvent(),
+                                      );
+                                    }
+                                  },
                                 ),
 
                                 _buildMenuCard(
@@ -114,7 +136,7 @@ class _UserView extends StatelessWidget {
         : 'U';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 70, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -184,7 +206,7 @@ class _UserView extends StatelessWidget {
                   const Icon(
                     Icons.email_outlined,
                     color: Colors.white70,
-                    size: 18,
+                    size: 20,
                   ),
 
                   const SizedBox(width: 8),
@@ -195,7 +217,7 @@ class _UserView extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 14,
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -217,7 +239,7 @@ class _UserView extends StatelessWidget {
                   const Icon(
                     Icons.phone_outlined,
                     color: Colors.white70,
-                    size: 18,
+                    size: 20,
                   ),
 
                   const SizedBox(width: 8),
@@ -226,7 +248,7 @@ class _UserView extends StatelessWidget {
                     user.phone?.isNotEmpty == true
                         ? user.phone
                         : 'Nomor telepon belum ditambahkan',
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                 ],
               ),

@@ -29,10 +29,8 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  Future<void> _onUpdateUser(
-    UpdateUserEvent event,
-    Emitter<UserState> emit,
-  ) async {
+  Future<void> _onUpdateUser(UpdateUserEvent event,Emitter<UserState> emit,) 
+  async {
     try {
       emit(UserLoading());
 
@@ -40,7 +38,8 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
       final updatedUser = currentUser.copyWith(
         name: event.name,
-        // phone: event.phone,
+        email: event.email,
+        phone: event.phone,
       );
 
       final result = await repository.updateProfile(updatedUser);
@@ -50,4 +49,5 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       emit(UserError(e.toString()));
     }
   }
+  
 }
