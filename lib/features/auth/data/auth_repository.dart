@@ -44,6 +44,7 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
+    required String phone,
   }) {
     if (name.trim().isEmpty) {
       return RegisterResult.failure('Nama tidak boleh kosong');
@@ -51,6 +52,10 @@ class AuthRepository {
 
     if (email.trim().isEmpty) {
       return RegisterResult.failure('Email tidak boleh kosong');
+    }
+
+    if (phone.trim().isEmpty) {
+      return RegisterResult.failure('Nomor telepon tidak boleh kosong');
     }
 
     if (password.trim().length < 6) {
@@ -61,11 +66,17 @@ class AuthRepository {
     if (emailExists) {
       return RegisterResult.failure('Email sudah terdaftar');
     }
+    
+    final phoneExists = _registeredUsers.any((u) => u.phone == phone);
+    if (phoneExists) {
+      return RegisterResult.failure('Nomor telepon sudah terdaftar');
+    }
 
     final newUser = UserModel(
       id: 'user_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       email: email,
+      phone: phone,
       password: password,
     );
 

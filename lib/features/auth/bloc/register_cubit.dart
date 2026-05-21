@@ -36,6 +36,7 @@ class RegisterCubit extends Cubit<RegisterState> {
   Future<void> submitRegister({
     required String name,
     required String email,
+    required String phone,
     required String password,
   }) async {
     emit(const RegisterState(status: RegisterStatus.loading));
@@ -45,6 +46,7 @@ class RegisterCubit extends Cubit<RegisterState> {
     final result = _repository.register(
       name: name,
       email: email,
+      phone: phone,
       password: password,
     );
 
