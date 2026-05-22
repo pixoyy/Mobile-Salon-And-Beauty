@@ -11,13 +11,14 @@ class UserBloc extends Bloc<UserEvent, UserState> {
 
   UserBloc(this.repository) : super(UserInitial()) {
     on<LoadUserEvent>(_onLoadUser);
+
     on<UpdateUserEvent>(_onUpdateUser);
+
+    /// TAMBAHKAN INI
+    on<ChangePasswordEvent>(_onChangePassword);
   }
 
-  Future<void> _onLoadUser(
-    LoadUserEvent event,
-    Emitter<UserState> emit,
-  ) async {
+  Future<void> _onLoadUser(LoadUserEvent event, Emitter<UserState> emit) async {
     try {
       emit(UserLoading());
 
@@ -29,8 +30,10 @@ class UserBloc extends Bloc<UserEvent, UserState> {
     }
   }
 
-  Future<void> _onUpdateUser(UpdateUserEvent event,Emitter<UserState> emit,) 
-  async {
+  Future<void> _onUpdateUser(
+    UpdateUserEvent event,
+    Emitter<UserState> emit,
+  ) async {
     try {
       emit(UserLoading());
 
@@ -49,5 +52,25 @@ class UserBloc extends Bloc<UserEvent, UserState> {
       emit(UserError(e.toString()));
     }
   }
-  
+
+  /// TAMBAHKAN FUNCTION INI DI BAWAH
+  Future<void> _onChangePassword(
+    ChangePasswordEvent event,
+    Emitter<UserState> emit,
+  ) async {
+    try {
+      emit(ChangePasswordLoading());
+
+      await repository.changePassword(
+        oldPassword: event.oldPassword,
+        newPassword: event.newPassword,
+      );
+
+      emit(ChangePasswordSuccess());
+
+      add(LoadUserEvent());
+    } catch (e) {
+      emit(ChangePasswordError(e.toString()));
+    }
+  }
 }

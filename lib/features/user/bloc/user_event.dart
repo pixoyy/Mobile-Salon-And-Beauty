@@ -15,3 +15,10 @@ class UpdateUserEvent extends UserEvent {
     required this.phone,
   });
 }
+
+class ChangePasswordEvent extends UserEvent {
+  final String oldPassword;
+  final String newPassword;
+
+  ChangePasswordEvent({required this.oldPassword, required this.newPassword});
+}

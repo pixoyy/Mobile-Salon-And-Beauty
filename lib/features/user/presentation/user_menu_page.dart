@@ -5,6 +5,7 @@ import 'package:salon_and_beauty/core/theme/app_colors.dart';
 import 'package:salon_and_beauty/features/auth/presentation/login_page.dart';
 import 'package:salon_and_beauty/features/user/bloc/user_bloc.dart';
 import 'package:salon_and_beauty/features/user/data/user_repository.dart';
+import 'package:salon_and_beauty/features/user/presentation/change_password_page.dart';
 import 'package:salon_and_beauty/features/user/presentation/edit_profile_page.dart';
 
 class UserMenuPage extends StatelessWidget {
@@ -99,7 +100,17 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.lock_outline_rounded,
                                   title: 'Keamanan Akun',
                                   subtitle: 'Ubah password dan keamanan akun',
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider.value(
+                                          value: context.read<UserBloc>(),
+                                          child: const ChangePasswordPage(),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -126,7 +137,7 @@ class _UserView extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildHeader(BuildContext context, dynamic user) {
     final hasImage =
         user.imageUrl != null && user.imageUrl.toString().isNotEmpty;
