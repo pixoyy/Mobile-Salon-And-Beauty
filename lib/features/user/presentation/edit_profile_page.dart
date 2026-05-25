@@ -164,19 +164,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
-
-        // decoration: BoxDecoration(
-        //   color: AppColors.primary,
-        //   borderRadius: BorderRadius.circular(30),
-        //   border: Border.all(color: AppColors.secondary, width: 2),
-        //   boxShadow: [
-        //     BoxShadow(
-        //       color: Colors.black.withOpacity(0.06),
-        //       blurRadius: 18,
-        //       offset: const Offset(0, 10),
-        //     ),
-        //   ],
-        // ),
         decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topLeft,
