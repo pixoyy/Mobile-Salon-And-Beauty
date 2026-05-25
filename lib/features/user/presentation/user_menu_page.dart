@@ -5,6 +5,9 @@ import 'package:salon_and_beauty/core/theme/app_colors.dart';
 import 'package:salon_and_beauty/features/auth/presentation/login_page.dart';
 import 'package:salon_and_beauty/features/user/bloc/user_bloc.dart';
 import 'package:salon_and_beauty/features/user/data/user_repository.dart';
+import 'package:salon_and_beauty/features/user/presentation/change_password_page.dart';
+import 'package:salon_and_beauty/features/user/presentation/edit_profile_page.dart';
+import 'package:salon_and_beauty/features/user/presentation/faq_page.dart';
 
 class UserMenuPage extends StatelessWidget {
   const UserMenuPage({super.key});
@@ -60,7 +63,28 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.person_outline_rounded,
                                   title: 'Edit Profile',
                                   subtitle: 'Ubah informasi profile Anda',
-                                  onTap: () {},
+                                  // onTap: () {
+                                  //   Navigator.push(
+                                  //     context,
+                                  //     MaterialPageRoute(
+                                  //       builder: (_) => const EditProfilePage(),
+                                  //     ),
+                                  //   );
+                                  // },
+                                  onTap: () async {
+                                    final result = await Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const EditProfilePage(),
+                                      ),
+                                    );
+
+                                    if (result == true && context.mounted) {
+                                      context.read<UserBloc>().add(
+                                        LoadUserEvent(),
+                                      );
+                                    }
+                                  },
                                 ),
 
                                 _buildMenuCard(
@@ -69,7 +93,12 @@ class _UserView extends StatelessWidget {
                                   subtitle:
                                       'Panduan penggunaan aplikasi salon booking',
                                   onTap: () {
-                                    _showFaqDialog(context);
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => const FaqPage(),
+                                      ),
+                                    );
                                   },
                                 ),
 
@@ -77,7 +106,17 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.lock_outline_rounded,
                                   title: 'Keamanan Akun',
                                   subtitle: 'Ubah password dan keamanan akun',
-                                  onTap: () {},
+                                  onTap: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (_) => BlocProvider.value(
+                                          value: context.read<UserBloc>(),
+                                          child: const ChangePasswordPage(),
+                                        ),
+                                      ),
+                                    );
+                                  },
                                 ),
                               ],
                             ),
@@ -104,7 +143,7 @@ class _UserView extends StatelessWidget {
       ),
     );
   }
-  
+
   Widget _buildHeader(BuildContext context, dynamic user) {
     final hasImage =
         user.imageUrl != null && user.imageUrl.toString().isNotEmpty;
@@ -114,7 +153,7 @@ class _UserView extends StatelessWidget {
         : 'U';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 70, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
@@ -184,7 +223,7 @@ class _UserView extends StatelessWidget {
                   const Icon(
                     Icons.email_outlined,
                     color: Colors.white70,
-                    size: 18,
+                    size: 20,
                   ),
 
                   const SizedBox(width: 8),
@@ -195,7 +234,7 @@ class _UserView extends StatelessWidget {
                       overflow: TextOverflow.ellipsis,
                       style: const TextStyle(
                         color: Colors.white70,
-                        fontSize: 14,
+                        fontSize: 16,
                       ),
                     ),
                   ),
@@ -217,7 +256,7 @@ class _UserView extends StatelessWidget {
                   const Icon(
                     Icons.phone_outlined,
                     color: Colors.white70,
-                    size: 18,
+                    size: 20,
                   ),
 
                   const SizedBox(width: 8),
@@ -226,7 +265,7 @@ class _UserView extends StatelessWidget {
                     user.phone?.isNotEmpty == true
                         ? user.phone
                         : 'Nomor telepon belum ditambahkan',
-                    style: const TextStyle(color: Colors.white70, fontSize: 14),
+                    style: const TextStyle(color: Colors.white70, fontSize: 16),
                   ),
                 ],
               ),
@@ -512,134 +551,134 @@ class _UserView extends StatelessWidget {
     );
   }
 
-  void _showFaqDialog(BuildContext context) {
-    showModalBottomSheet(
-      context: context,
-      backgroundColor: Colors.transparent,
-      isScrollControlled: true,
-      builder: (_) {
-        return Container(
-          padding: const EdgeInsets.all(24),
-          decoration: const BoxDecoration(
-            color: Colors.white,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                width: 50,
-                height: 5,
-                decoration: BoxDecoration(
-                  color: Colors.grey.shade300,
-                  borderRadius: BorderRadius.circular(20),
-                ),
-              ),
+  // void _showFaqDialog(BuildContext context) {
+  //   showModalBottomSheet(
+  //     context: context,
+  //     backgroundColor: Colors.transparent,
+  //     isScrollControlled: true,
+  //     builder: (_) {
+  //       return Container(
+  //         padding: const EdgeInsets.all(24),
+  //         decoration: const BoxDecoration(
+  //           color: Colors.white,
+  //           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
+  //         ),
+  //         child: Column(
+  //           mainAxisSize: MainAxisSize.min,
+  //           children: [
+  //             Container(
+  //               width: 50,
+  //               height: 5,
+  //               decoration: BoxDecoration(
+  //                 color: Colors.grey.shade300,
+  //                 borderRadius: BorderRadius.circular(20),
+  //               ),
+  //             ),
 
-              const SizedBox(height: 24),
+  //             const SizedBox(height: 24),
 
-              const Text(
-                'Bantuan & FAQ',
-                style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-              ),
+  //             const Text(
+  //               'Bantuan & FAQ',
+  //               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+  //             ),
 
-              const SizedBox(height: 24),
+  //             const SizedBox(height: 24),
 
-              _faqItem(
-                question: 'Bagaimana cara booking layanan?',
-                answer:
-                    'Pilih layanan salon, pilih stylist, lalu tentukan jadwal booking.',
-              ),
+  //             _faqItem(
+  //               question: 'Bagaimana cara booking layanan?',
+  //               answer:
+  //                   'Pilih layanan salon, pilih stylist, lalu tentukan jadwal booking.',
+  //             ),
 
-              _faqItem(
-                question: 'Bagaimana melihat riwayat booking?',
-                answer:
-                    'Masuk ke halaman booking untuk melihat seluruh riwayat reservasi Anda.',
-              ),
+  //             _faqItem(
+  //               question: 'Bagaimana melihat riwayat booking?',
+  //               answer:
+  //                   'Masuk ke halaman booking untuk melihat seluruh riwayat reservasi Anda.',
+  //             ),
 
-              _faqItem(
-                question: 'Bagaimana mengubah profile?',
-                answer: 'Masuk ke menu Edit Profile pada halaman akun.',
-              ),
+  //             _faqItem(
+  //               question: 'Bagaimana mengubah profile?',
+  //               answer: 'Masuk ke menu Edit Profile pada halaman akun.',
+  //             ),
 
-              _faqItem(
-                question: 'Apakah pembayaran bisa dilakukan di tempat?',
-                answer: 'Ya, pembayaran dapat dilakukan langsung di salon.',
-              ),
+  //             _faqItem(
+  //               question: 'Apakah pembayaran bisa dilakukan di tempat?',
+  //               answer: 'Ya, pembayaran dapat dilakukan langsung di salon.',
+  //             ),
 
-              const SizedBox(height: 20),
-            ],
-          ),
-        );
-      },
-    );
-  }
+  //             const SizedBox(height: 20),
+  //           ],
+  //         ),
+  //       );
+  //     },
+  //   );
+  // }
 
-  Widget _faqItem({required String question, required String answer}) {
-    return Align(
-      alignment: Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        constraints: const BoxConstraints(maxWidth: 400),
-        child: Row(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            /// AVATAR FAQ
-            Container(
-              height: 38,
-              width: 38,
-              decoration: BoxDecoration(
-                color: AppColors.primary.withOpacity(0.12),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.support_agent_rounded,
-                color: AppColors.primary,
-                size: 20,
-              ),
-            ),
+  // Widget _faqItem({required String question, required String answer}) {
+  //   return Align(
+  //     alignment: Alignment.centerLeft,
+  //     child: Container(
+  //       margin: const EdgeInsets.only(bottom: 16),
+  //       constraints: const BoxConstraints(maxWidth: 400),
+  //       child: Row(
+  //         crossAxisAlignment: CrossAxisAlignment.start,
+  //         children: [
+  //           /// AVATAR FAQ
+  //           Container(
+  //             height: 38,
+  //             width: 38,
+  //             decoration: BoxDecoration(
+  //               color: AppColors.primary.withOpacity(0.12),
+  //               shape: BoxShape.circle,
+  //             ),
+  //             child: const Icon(
+  //               Icons.support_agent_rounded,
+  //               color: AppColors.primary,
+  //               size: 20,
+  //             ),
+  //           ),
 
-            const SizedBox(width: 12),
+  //           const SizedBox(width: 12),
 
-            /// BUBBLE CHAT
-            Expanded(
-              child: Container(
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: AppColors.background,
-                  borderRadius: BorderRadius.circular(
-                    20,
-                  ).copyWith(topLeft: const Radius.circular(6)),
-                  border: Border.all(color: AppColors.border),
-                ),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      question,
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 14,
-                      ),
-                    ),
+  //           /// BUBBLE CHAT
+  //           Expanded(
+  //             child: Container(
+  //               padding: const EdgeInsets.all(16),
+  //               decoration: BoxDecoration(
+  //                 color: AppColors.background,
+  //                 borderRadius: BorderRadius.circular(
+  //                   20,
+  //                 ).copyWith(topLeft: const Radius.circular(6)),
+  //                 border: Border.all(color: AppColors.border),
+  //               ),
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Text(
+  //                     question,
+  //                     style: const TextStyle(
+  //                       fontWeight: FontWeight.w700,
+  //                       fontSize: 14,
+  //                     ),
+  //                   ),
 
-                    const SizedBox(height: 8),
+  //                   const SizedBox(height: 8),
 
-                    Text(
-                      answer,
-                      style: TextStyle(
-                        color: AppColors.mutedText,
-                        height: 1.5,
-                        fontSize: 13,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
+  //                   Text(
+  //                     answer,
+  //                     style: TextStyle(
+  //                       color: AppColors.mutedText,
+  //                       height: 1.5,
+  //                       fontSize: 13,
+  //                     ),
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ),
+  //         ],
+  //       ),
+  //     ),
+  //   );
+  // }
 }

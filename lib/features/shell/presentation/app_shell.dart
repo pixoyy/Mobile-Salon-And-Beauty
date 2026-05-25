@@ -5,7 +5,7 @@ import '../../booking/presentation/booking_menu_page.dart';
 import '../../dashboard/presentation/dashboard_page.dart';
 import '../../service/presentation/service_list_page.dart';
 import '../../stylist/presentation/stylist_list_page.dart';
-import '../../booking/presentation/history_page.dart';
+// import '../../booking/presentation/history_page.dart';
 
 class AppShell extends StatefulWidget {
   const AppShell({super.key});
