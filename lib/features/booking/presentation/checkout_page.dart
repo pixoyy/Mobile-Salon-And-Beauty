@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/theme/app_colors.dart';
 import '../../../core/models/discount.dart';
 
 import '../../user/data/dummy_user.dart';
-import 'booking_detail_page.dart';
 import '../../service/data/service_model.dart';
 import '../../stylist/data/stylist_model.dart';
 import '../bloc/booking_cubit.dart';
