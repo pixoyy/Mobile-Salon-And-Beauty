@@ -63,14 +63,6 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.person_outline_rounded,
                                   title: 'Edit Profile',
                                   subtitle: 'Ubah informasi profile Anda',
-                                  // onTap: () {
-                                  //   Navigator.push(
-                                  //     context,
-                                  //     MaterialPageRoute(
-                                  //       builder: (_) => const EditProfilePage(),
-                                  //     ),
-                                  //   );
-                                  // },
                                   onTap: () async {
                                     final result = await Navigator.push(
                                       context,
@@ -158,7 +150,15 @@ class _UserView extends StatelessWidget {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryDark,
+              AppColors.primaryDark.withOpacity(0.88),
+              AppColors.primary.withOpacity(0.75),
+            ],
+          ),
           borderRadius: BorderRadius.circular(30),
           border: Border.all(color: AppColors.secondary, width: 2),
           boxShadow: [
@@ -197,7 +197,7 @@ class _UserView extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 2),
 
             Text(
               user.name,
@@ -209,13 +209,13 @@ class _UserView extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 10),
+            const SizedBox(height: 2),
 
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -245,10 +245,10 @@ class _UserView extends StatelessWidget {
             const SizedBox(height: 10),
 
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
               decoration: BoxDecoration(
                 color: Colors.white.withOpacity(0.08),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(10),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
@@ -550,135 +550,4 @@ class _UserView extends StatelessWidget {
       ),
     );
   }
-
-  // void _showFaqDialog(BuildContext context) {
-  //   showModalBottomSheet(
-  //     context: context,
-  //     backgroundColor: Colors.transparent,
-  //     isScrollControlled: true,
-  //     builder: (_) {
-  //       return Container(
-  //         padding: const EdgeInsets.all(24),
-  //         decoration: const BoxDecoration(
-  //           color: Colors.white,
-  //           borderRadius: BorderRadius.vertical(top: Radius.circular(28)),
-  //         ),
-  //         child: Column(
-  //           mainAxisSize: MainAxisSize.min,
-  //           children: [
-  //             Container(
-  //               width: 50,
-  //               height: 5,
-  //               decoration: BoxDecoration(
-  //                 color: Colors.grey.shade300,
-  //                 borderRadius: BorderRadius.circular(20),
-  //               ),
-  //             ),
-
-  //             const SizedBox(height: 24),
-
-  //             const Text(
-  //               'Bantuan & FAQ',
-  //               style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
-  //             ),
-
-  //             const SizedBox(height: 24),
-
-  //             _faqItem(
-  //               question: 'Bagaimana cara booking layanan?',
-  //               answer:
-  //                   'Pilih layanan salon, pilih stylist, lalu tentukan jadwal booking.',
-  //             ),
-
-  //             _faqItem(
-  //               question: 'Bagaimana melihat riwayat booking?',
-  //               answer:
-  //                   'Masuk ke halaman booking untuk melihat seluruh riwayat reservasi Anda.',
-  //             ),
-
-  //             _faqItem(
-  //               question: 'Bagaimana mengubah profile?',
-  //               answer: 'Masuk ke menu Edit Profile pada halaman akun.',
-  //             ),
-
-  //             _faqItem(
-  //               question: 'Apakah pembayaran bisa dilakukan di tempat?',
-  //               answer: 'Ya, pembayaran dapat dilakukan langsung di salon.',
-  //             ),
-
-  //             const SizedBox(height: 20),
-  //           ],
-  //         ),
-  //       );
-  //     },
-  //   );
-  // }
-
-  // Widget _faqItem({required String question, required String answer}) {
-  //   return Align(
-  //     alignment: Alignment.centerLeft,
-  //     child: Container(
-  //       margin: const EdgeInsets.only(bottom: 16),
-  //       constraints: const BoxConstraints(maxWidth: 400),
-  //       child: Row(
-  //         crossAxisAlignment: CrossAxisAlignment.start,
-  //         children: [
-  //           /// AVATAR FAQ
-  //           Container(
-  //             height: 38,
-  //             width: 38,
-  //             decoration: BoxDecoration(
-  //               color: AppColors.primary.withOpacity(0.12),
-  //               shape: BoxShape.circle,
-  //             ),
-  //             child: const Icon(
-  //               Icons.support_agent_rounded,
-  //               color: AppColors.primary,
-  //               size: 20,
-  //             ),
-  //           ),
-
-  //           const SizedBox(width: 12),
-
-  //           /// BUBBLE CHAT
-  //           Expanded(
-  //             child: Container(
-  //               padding: const EdgeInsets.all(16),
-  //               decoration: BoxDecoration(
-  //                 color: AppColors.background,
-  //                 borderRadius: BorderRadius.circular(
-  //                   20,
-  //                 ).copyWith(topLeft: const Radius.circular(6)),
-  //                 border: Border.all(color: AppColors.border),
-  //               ),
-  //               child: Column(
-  //                 crossAxisAlignment: CrossAxisAlignment.start,
-  //                 children: [
-  //                   Text(
-  //                     question,
-  //                     style: const TextStyle(
-  //                       fontWeight: FontWeight.w700,
-  //                       fontSize: 14,
-  //                     ),
-  //                   ),
-
-  //                   const SizedBox(height: 8),
-
-  //                   Text(
-  //                     answer,
-  //                     style: TextStyle(
-  //                       color: AppColors.mutedText,
-  //                       height: 1.5,
-  //                       fontSize: 13,
-  //                     ),
-  //                   ),
-  //                 ],
-  //               ),
-  //             ),
-  //           ),
-  //         ],
-  //       ),
-  //     ),
-  //   );
-  // }
 }

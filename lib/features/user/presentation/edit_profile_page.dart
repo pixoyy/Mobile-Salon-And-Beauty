@@ -159,14 +159,34 @@ class _EditProfilePageState extends State<EditProfilePage> {
     String initial,
     String? imageUrl,
   ) {
-
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
+
+        // decoration: BoxDecoration(
+        //   color: AppColors.primary,
+        //   borderRadius: BorderRadius.circular(30),
+        //   border: Border.all(color: AppColors.secondary, width: 2),
+        //   boxShadow: [
+        //     BoxShadow(
+        //       color: Colors.black.withOpacity(0.06),
+        //       blurRadius: 18,
+        //       offset: const Offset(0, 10),
+        //     ),
+        //   ],
+        // ),
         decoration: BoxDecoration(
-          color: AppColors.primary,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              AppColors.primaryDark,
+              AppColors.primaryDark.withOpacity(0.88),
+              AppColors.primary.withOpacity(0.75),
+            ],
+          ),
           borderRadius: BorderRadius.circular(30),
           border: Border.all(color: AppColors.secondary, width: 2),
           boxShadow: [
@@ -269,7 +289,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
             ),
 
             const SizedBox(height: 25),
-
 
             const Text(
               'Ubah informasi profile Anda',

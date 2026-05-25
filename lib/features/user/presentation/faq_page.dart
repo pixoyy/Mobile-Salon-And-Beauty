@@ -86,10 +86,10 @@ class _FaqPageState extends State<FaqPage> {
         }).toList();
 
     return Scaffold(
-      backgroundColor: const Color(0xFFFFFAFB),
+      backgroundColor: AppColors.background,
 
       appBar: AppBar(
-        backgroundColor: const Color(0xFFFFFAFB),
+        backgroundColor: AppColors.background,
         elevation: 0,
         centerTitle: true,
         title: const Text(
