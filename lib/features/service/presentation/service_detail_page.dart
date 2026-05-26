@@ -40,16 +40,16 @@ class ServiceDetailPage extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Detail Layanan'),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Fitur bagikan akan hadir di phase berikutnya.')),
-                  );
-                },
-                icon: const Icon(Icons.ios_share_outlined),
-              ),
-            ],
+            // actions: [
+            //   IconButton(
+            //     onPressed: () {
+            //       ScaffoldMessenger.of(context).showSnackBar(
+            //         const SnackBar(content: Text('Fitur bagikan akan hadir di phase berikutnya.')),
+            //       );
+            //     },
+            //     icon: const Icon(Icons.ios_share_outlined),
+            //   ),
+            // ],
           ),
           body: _DetailBody(service: service),
           bottomNavigationBar: SafeArea(

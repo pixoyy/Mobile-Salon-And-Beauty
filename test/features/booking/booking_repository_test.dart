@@ -31,7 +31,7 @@ void main() {
         subtotal: 230000,
         discount: 0,
         totalPrice: 230000,
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         createdAt: DateTime(2026, 12, 1),
       ),
     );
@@ -124,7 +124,7 @@ void main() {
         subtotal: 650000,
         discount: 0,
         totalPrice: 650000,
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         createdAt: DateTime(2026, 12, 1),
       ),
     );
@@ -169,7 +169,7 @@ void main() {
         subtotal: 135000,
         discount: 0,
         totalPrice: 135000,
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         createdAt: DateTime(2026, 12, 1),
       ),
     );

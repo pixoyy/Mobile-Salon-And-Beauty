@@ -61,7 +61,7 @@ void main() {
       final BookingModel pendingBooking = await _createBookingForTest(
         repository: repository,
         id: 'bk-901',
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         dayOffset: 1,
       );
       final BookingModel completedBooking = await _createBookingForTest(
@@ -91,7 +91,7 @@ void main() {
       final BookingModel booking = await _createBookingForTest(
         repository: repository,
         id: 'bk-903',
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         dayOffset: 3,
       );
 
@@ -110,7 +110,7 @@ void main() {
       final BookingModel booking = await _createBookingForTest(
         repository: repository,
         id: 'bk-904',
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         dayOffset: 4,
       );
 

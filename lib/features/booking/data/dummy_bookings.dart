@@ -4,7 +4,7 @@ class DummyBookings {
   static final List<BookingModel> upcoming = [
     BookingModel(
       id: 'bk-001',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-001',
       serviceIds: const ['svc-001', 'svc-005'],
       bookingDate: DateTime(2026, 5, 25),
@@ -18,7 +18,7 @@ class DummyBookings {
     ),
     BookingModel(
       id: 'bk-002',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-003',
       serviceIds: const ['svc-006'],
       bookingDate: DateTime(2026, 5, 29),
@@ -34,7 +34,7 @@ class DummyBookings {
   static final List<BookingModel> history = [
     BookingModel(
       id: 'bk-003',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-002',
       serviceIds: const ['svc-002'],
       bookingDate: DateTime(2026, 5, 2),
@@ -47,7 +47,7 @@ class DummyBookings {
     ),
     BookingModel(
       id: 'bk-004',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-004',
       serviceIds: const ['svc-004'],
       bookingDate: DateTime(2026, 4, 14),
@@ -60,7 +60,7 @@ class DummyBookings {
     ),
     BookingModel(
       id: 'bk-005',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-005',
       serviceIds: const ['svc-001'],
       bookingDate: DateTime(2026, 3, 20),

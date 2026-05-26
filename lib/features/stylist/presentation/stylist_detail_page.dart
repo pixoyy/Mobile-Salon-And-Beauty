@@ -39,16 +39,16 @@ class _StylistDetailView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Detail Stylist'),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Fitur bagikan akan hadir di phase berikutnya.')),
-                  );
-                },
-                icon: const Icon(Icons.ios_share_outlined),
-              ),
-            ],
+            // actions: [
+            //   IconButton(
+            //     onPressed: () {
+            //       ScaffoldMessenger.of(context).showSnackBar(
+            //         const SnackBar(content: Text('Fitur bagikan akan hadir di phase berikutnya.')),
+            //       );
+            //     },
+            //     icon: const Icon(Icons.ios_share_outlined),
+            //   ),
+            // ],
           ),
           body: switch (state.status) {
             StylistStatus.initial || StylistStatus.loading =>

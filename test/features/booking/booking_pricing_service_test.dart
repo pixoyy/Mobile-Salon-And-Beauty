@@ -54,7 +54,7 @@ const List<ServiceModel> _noPromoServices = <ServiceModel>[
     category: 'Treatment',
     description: 'Test service A',
     durationMinutes: 45,
-    price: 120000,
+    price: 45000,
     isPopular: false,
   ),
   ServiceModel(
@@ -63,7 +63,7 @@ const List<ServiceModel> _noPromoServices = <ServiceModel>[
     category: 'Treatment',
     description: 'Test service B',
     durationMinutes: 60,
-    price: 80000,
+    price: 30000,
     isPopular: false,
   ),
 ];
@@ -76,10 +76,10 @@ void main() {
       discounts: DummyDiscounts.data,
     );
 
-    expect(result.appliedDiscount?.code, 'GLAMORA20');
+    expect(result.appliedDiscount?.code, 'WEDDING50');
     expect(result.payment.subtotal, 625000);
-    expect(result.payment.discountAmount, 50000);
-    expect(result.payment.totalPrice, 575000);
+    expect(result.payment.discountAmount, 200000);
+    expect(result.payment.totalPrice, 425000);
   });
 
   test('does not apply promo when minimum spend is not reached', () async {
@@ -93,6 +93,59 @@ void main() {
     expect(result.payment.subtotal, 70000);
     expect(result.payment.discountAmount, 0);
     expect(result.payment.totalPrice, 70000);
+  });
+
+  test('prefers the active discount with the closest min spend below subtotal', () async {
+    final List<Discount> customDiscounts = <Discount>[
+      Discount(
+        code: 'LOW10',
+        title: 'Low Spend',
+        percent: 10,
+        maxAmount: 50000,
+        minSpend: 50000,
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 12, 31),
+      ),
+      Discount(
+        code: 'MID20',
+        title: 'Mid Spend',
+        percent: 20,
+        maxAmount: 70000,
+        minSpend: 150000,
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 12, 31),
+      ),
+      Discount(
+        code: 'HIGH30',
+        title: 'High Spend',
+        percent: 30,
+        maxAmount: 100000,
+        minSpend: 250000,
+        startDate: DateTime(2026, 1, 1),
+        endDate: DateTime(2026, 12, 31),
+      ),
+    ];
+
+    final PricingResult result = await BookingPricingService.calculate(
+      const <ServiceModel>[
+        ServiceModel(
+          id: 'svc-close-1',
+          name: 'Close Selection',
+          category: 'Haircare',
+          description: 'Test service',
+          durationMinutes: 90,
+          price: 260000,
+          isPopular: false,
+        ),
+      ],
+      bookingDate: DateTime(2026, 6, 20),
+      discounts: customDiscounts,
+    );
+
+    expect(result.appliedDiscount?.code, 'HIGH30');
+    expect(result.payment.subtotal, 260000);
+    expect(result.payment.discountAmount, 78000);
+    expect(result.payment.totalPrice, 182000);
   });
 
   test('caps discount amount at maxAmount', () async {
@@ -128,7 +181,7 @@ void main() {
     expect(result.payment.totalPrice, 80000);
   });
 
-  test('does not apply promo when no discount is active for the booking date', () async {
+  test('does not apply promo when no discount reaches minimum spend', () async {
     final PricingResult result = await BookingPricingService.calculate(
       _noPromoServices,
       bookingDate: DateTime(2026, 12, 20),
@@ -136,8 +189,8 @@ void main() {
     );
 
     expect(result.appliedDiscount, isNull);
-    expect(result.payment.subtotal, 200000);
+    expect(result.payment.subtotal, 75000);
     expect(result.payment.discountAmount, 0);
-    expect(result.payment.totalPrice, 200000);
+    expect(result.payment.totalPrice, 75000);
   });
 }

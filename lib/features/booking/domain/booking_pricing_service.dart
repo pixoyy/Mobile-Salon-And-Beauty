@@ -15,8 +15,8 @@ class BookingPricingService {
 
   /// Calculate pricing for given services and optional discounts list.
   ///
-  /// Policy: auto-apply the discount (within date range) that yields the
-  /// highest nominal discount amount, provided `subtotal >= minSpend`.
+  /// Policy: auto-apply the dummy discount with the highest `minSpend`
+  /// that does not exceed the subtotal, then cap the discount amount.
   static Future<PricingResult> calculate(
     List<ServiceModel> services, {
     DateTime? bookingDate,
@@ -27,20 +27,20 @@ class BookingPricingService {
     final List<Discount> pool = discounts ?? DummyDiscounts.data;
 
     Discount? best;
+    int bestMinSpend = -1;
     int bestAmount = 0;
 
     for (final d in pool) {
-      final bool inRange = bookingDate == null
-          ? true
-          : !(bookingDate.isBefore(d.startDate) || bookingDate.isAfter(d.endDate));
-
-      if (!inRange) continue;
       if (subtotal < d.minSpend) continue;
 
       final int computed = ((subtotal * d.percent) / 100).round();
       final int capped = computed > d.maxAmount ? d.maxAmount : computed;
 
-      if (capped > bestAmount) {
+      final bool isBetter = d.minSpend > bestMinSpend ||
+          (d.minSpend == bestMinSpend && capped > bestAmount);
+
+      if (isBetter) {
+        bestMinSpend = d.minSpend;
         bestAmount = capped;
         best = d;
       }

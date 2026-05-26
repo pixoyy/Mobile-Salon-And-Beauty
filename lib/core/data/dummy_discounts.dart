@@ -5,8 +5,8 @@ class DummyDiscounts {
 
   static final List<Discount> data = <Discount>[
     Discount(
-      code: 'GLAMORA20',
-      title: 'All Hair Treatment',
+      code: 'SAVE20K',
+      title: 'Save More on Your Beauty Session',
       percent: 20,
       maxAmount: 50000,
       minSpend: 100000,
@@ -14,8 +14,8 @@ class DummyDiscounts {
       endDate: DateTime(2026, 5, 31),
     ),
     Discount(
-      code: 'NAIL30',
-      title: 'Nail Art & Spa',
+      code: 'SPEND150',
+      title: 'Special Treat for Minimum Spend',
       percent: 30,
       maxAmount: 75000,
       minSpend: 150000,
@@ -23,8 +23,8 @@ class DummyDiscounts {
       endDate: DateTime(2026, 6, 30),
     ),
     Discount(
-      code: 'FACIAL15',
-      title: 'Premium Facial',
+      code: 'BEAUTYDEAL',
+      title: 'Glow Up & Save More',
       percent: 15,
       maxAmount: 30000,
       minSpend: 90000,
@@ -32,8 +32,8 @@ class DummyDiscounts {
       endDate: DateTime(2026, 7, 31),
     ),
     Discount(
-      code: 'KERATIN35',
-      title: 'Keratin Smooth Hair',
+      code: 'BIGSAVE35',
+      title: 'Bigger Spend, Bigger Discount',
       percent: 35,
       maxAmount: 85000,
       minSpend: 200000,
@@ -41,8 +41,8 @@ class DummyDiscounts {
       endDate: DateTime(2026, 10, 31),
     ),
     Discount(
-      code: 'WEDDING50',
-      title: 'Wedding Package',
+      code: 'LUXE50',
+      title: 'Luxury Beauty Deals Await',
       percent: 50,
       maxAmount: 200000,
       minSpend: 500000,
