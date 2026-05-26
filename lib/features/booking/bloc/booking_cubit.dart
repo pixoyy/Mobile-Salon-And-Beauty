@@ -234,8 +234,15 @@ class BookingCubit extends Cubit<BookingState> {
     );
 
     if (!isAvailable) {
+      final String fallbackMessage = await _bookingRepository.getAvailabilityMessage(
+        stylistId,
+        _scheduleState.selectedDate!,
+        normalizedTime,
+        durationMinutes: await _selectedServicesDurationMinutes(),
+          ) ??
+          'Jam yang dipilih belum tersedia. Silakan pilih jam lain.';
       emit(BookingError(
-        message: 'Jam yang dipilih sudah terisi. Silakan pilih jam lain.',
+        message: fallbackMessage,
         scheduleState: _scheduleState,
       ));
       await loadAvailableSlots(stylistId, _scheduleState.selectedDate!);

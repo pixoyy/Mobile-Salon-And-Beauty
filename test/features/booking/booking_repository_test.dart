@@ -69,6 +69,46 @@ void main() {
     expect(slots, contains('11:00'));
   });
 
+  test('booking availability allows a one-hour service starting at 08:00', () async {
+    final BookingRepository repository = BookingRepository();
+    final DateTime date = DateTime(2026, 12, 14);
+
+    final bool eightAmAvailable = await repository.checkAvailability(
+      'sty-003',
+      date,
+      '08:00',
+      durationMinutes: 60,
+    );
+
+    final String? message = await repository.getAvailabilityMessage(
+      'sty-003',
+      date,
+      '08:00',
+      durationMinutes: 60,
+    );
+
+    expect(eightAmAvailable, isTrue);
+    expect(message, isNull);
+  });
+
+  test('booking availability returns a clear message when time is insufficient', () async {
+    final BookingRepository repository = BookingRepository();
+    final DateTime date = DateTime(2026, 12, 15);
+
+    final String? message = await repository.getAvailabilityMessage(
+      'sty-004',
+      date,
+      '19:00',
+      durationMinutes: 100,
+    );
+
+    expect(message, isNotNull);
+    expect(
+      message,
+      contains('belum cukup untuk durasi layanan ini'),
+    );
+  });
+
   test('booking availability blocks only the exact occupied range', () async {
     final BookingRepository repository = BookingRepository();
     final DateTime date = DateTime(2026, 12, 13);
@@ -140,8 +180,7 @@ void main() {
     expect(bookings, everyElement(predicate<BookingModel>((booking) => booking.customerId == activeUser.id)));
   });
 
-  test('booking slot rejects times that exceed operational hours after duration',
-      () async {
+  test('booking slot allows 20:00 for services up to 60 minutes', () async {
     final BookingRepository repository = BookingRepository();
     final DateTime date = DateTime(2026, 12, 13);
 
@@ -149,9 +188,43 @@ void main() {
       'sty-002',
       date,
       '20:00',
-      durationMinutes: 45,
+      durationMinutes: 60,
+    );
+
+    final String? message = await repository.getAvailabilityMessage(
+      'sty-002',
+      date,
+      '20:00',
+      durationMinutes: 60,
+    );
+
+    expect(lateSlotAvailable, isTrue);
+    expect(message, isNull);
+  });
+
+  test('booking slot rejects 20:00 for services longer than 60 minutes', () async {
+    final BookingRepository repository = BookingRepository();
+    final DateTime date = DateTime(2026, 12, 13);
+
+    final bool lateSlotAvailable = await repository.checkAvailability(
+      'sty-002',
+      date,
+      '20:00',
+      durationMinutes: 100,
+    );
+
+    final String? message = await repository.getAvailabilityMessage(
+      'sty-002',
+      date,
+      '20:00',
+      durationMinutes: 100,
     );
 
     expect(lateSlotAvailable, isFalse);
+    expect(message, isNotNull);
+    expect(
+      message,
+      contains('Jam 20:00 hanya bisa dipakai untuk layanan berdurasi maksimal 60 menit'),
+    );
   });
 }

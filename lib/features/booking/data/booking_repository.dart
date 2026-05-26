@@ -17,7 +17,7 @@ class BookingRepository {
   }
 
   static String get _activeCustomerId => AuthSession.activeCustomerId;
-  static const int _startHour = 9;
+  static const int _startHour = 8;
   static const int _endHour = 20;
   static const int _slotDurationMinutes = 60;
   static const int _turnaroundMinutes = 0;
@@ -162,11 +162,42 @@ class BookingRepository {
     }
 
     final int resolvedDuration = durationMinutes > 0 ? durationMinutes : _slotDurationMinutes;
-    if (!_isWithinOperationalHours(normalizedTime, resolvedDuration)) {
+    if (_availabilityFailureReason(
+          stylistId: stylistId,
+          date: date,
+          time: normalizedTime,
+          durationMinutes: resolvedDuration,
+          excludedBookingId: excludedBookingId,
+        ) !=
+        null) {
       return false;
     }
 
     return _isSlotAvailable(
+      stylistId: stylistId,
+      date: date,
+      time: normalizedTime,
+      durationMinutes: resolvedDuration,
+      excludedBookingId: excludedBookingId,
+    );
+  }
+
+  Future<String?> getAvailabilityMessage(
+    String stylistId,
+    DateTime date,
+    String time, {
+    int durationMinutes = 0,
+    String? excludedBookingId,
+  }) async {
+    await Future<void>.delayed(const Duration(milliseconds: 80));
+
+    final String? normalizedTime = _normalizeTime(time);
+    if (normalizedTime == null) {
+      return 'Format jam booking belum valid. Gunakan format HH:mm.';
+    }
+
+    final int resolvedDuration = durationMinutes > 0 ? durationMinutes : _slotDurationMinutes;
+    return _availabilityFailureReason(
       stylistId: stylistId,
       date: date,
       time: normalizedTime,
@@ -321,7 +352,72 @@ class BookingRepository {
     final int operationalStart = _startHour * 60;
     final int operationalEnd = _endHour * 60;
 
+    if (start == operationalEnd && durationMinutes <= _slotDurationMinutes) {
+      return true;
+    }
+
     return start >= operationalStart && end <= operationalEnd;
+  }
+
+  String? _availabilityFailureReason({
+    required String stylistId,
+    required DateTime date,
+    required String time,
+    required int durationMinutes,
+    String? excludedBookingId,
+  }) {
+    final int candidateStart = _timeToMinutes(time);
+    final int candidateEnd = candidateStart + durationMinutes + _turnaroundMinutes;
+    final int operationalStart = _startHour * 60;
+    final int operationalEnd = _endHour * 60;
+
+    if (candidateStart == operationalEnd && durationMinutes <= _slotDurationMinutes) {
+      return null;
+    }
+
+    if (candidateStart == operationalEnd && durationMinutes > _slotDurationMinutes) {
+      return 'Jam 20:00 hanya bisa dipakai untuk layanan berdurasi maksimal 60 menit. Silakan pilih layanan yang lebih singkat atau jam yang lebih awal.';
+    }
+
+    if (candidateStart < operationalStart || candidateEnd > operationalEnd) {
+      final String startLabel = _startHour.toString().padLeft(2, '0');
+      final String endLabel = _endHour.toString().padLeft(2, '0');
+      final int remainingMinutes = operationalEnd - candidateStart;
+
+      if (remainingMinutes > 0 && remainingMinutes < durationMinutes) {
+        return 'Waktu yang dipilih belum cukup untuk durasi layanan ini. Silakan pilih jam yang lebih awal atau pilih layanan yang lebih singkat.';
+      }
+
+      return 'Jam booking harus berada di antara $startLabel:00 sampai $endLabel:00 dan tetap cukup untuk menyelesaikan layanan.';
+    }
+
+    for (final booking in _bookings) {
+      if (excludedBookingId != null && booking.id == excludedBookingId) {
+        continue;
+      }
+
+      if (booking.stylistId != stylistId ||
+          !_isSameDate(booking.bookingDate, date) ||
+          booking.status == BookingStatus.cancelled) {
+        continue;
+      }
+
+      final String? existingTime = _normalizeTime(booking.bookingTime);
+      if (existingTime == null) {
+        continue;
+      }
+
+      final int existingDuration = _resolveBookingDurationMinutesSync(booking.serviceIds);
+      final int existingStart = _timeToMinutes(existingTime);
+      final int existingEnd = existingStart + existingDuration + _turnaroundMinutes;
+
+      final bool hasOverlap = candidateStart < existingEnd && candidateEnd > existingStart;
+      if (hasOverlap) {
+        return 'Slot ini sudah terisi oleh booking lain. Silakan pilih jam lain yang masih kosong.';
+      }
+    }
+
+    return null;
   }
 
   int _resolveBookingDurationMinutesSync(List<String> serviceIds) {
