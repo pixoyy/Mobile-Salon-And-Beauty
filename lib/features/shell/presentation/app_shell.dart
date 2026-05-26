@@ -8,16 +8,24 @@ import '../../stylist/presentation/stylist_list_page.dart';
 // import '../../booking/presentation/history_page.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  int _currentIndex = 0;
+  late int _currentIndex;
   int _bookingTabVersion = 0;
   // int _historyTabVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {

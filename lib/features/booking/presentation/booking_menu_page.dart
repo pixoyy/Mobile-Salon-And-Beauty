@@ -284,36 +284,45 @@ class _BookingMenuPageState extends State<BookingMenuPage>
   }
 
   Widget _buildFilters() {
-    return Wrap(
-      spacing: 8,
-      runSpacing: 8,
-      children: [
-        ChoiceChip(
-          label: const Text('Semua'),
-          selected: _filterStatus == null,
-          onSelected: (_) => _setFilter(null),
-        ),
-        ChoiceChip(
-          label: const Text('Pending'),
-          selected: _filterStatus == BookingStatus.pending,
-          onSelected: (_) => _setFilter(BookingStatus.pending),
-        ),
-        ChoiceChip(
-          label: const Text('Confirmed'),
-          selected: _filterStatus == BookingStatus.confirmed,
-          onSelected: (_) => _setFilter(BookingStatus.confirmed),
-        ),
-        ChoiceChip(
-          label: const Text('Completed'),
-          selected: _filterStatus == BookingStatus.completed,
-          onSelected: (_) => _setFilter(BookingStatus.completed),
-        ),
-        ChoiceChip(
-          label: const Text('Dibatalkan'),
-          selected: _filterStatus == BookingStatus.cancelled,
-          onSelected: (_) => _setFilter(BookingStatus.cancelled),
-        ),
-      ],
+    final List<Widget> chips = <Widget>[
+      ChoiceChip(
+        label: const Text('Semua'),
+        selected: _filterStatus == null,
+        onSelected: (_) => _setFilter(null),
+      ),
+      ChoiceChip(
+        label: const Text('Upcoming'),
+        selected: _filterStatus == BookingStatus.upcoming,
+        onSelected: (_) => _setFilter(BookingStatus.upcoming),
+      ),
+      ChoiceChip(
+        label: const Text('On Going'),
+        selected: _filterStatus == BookingStatus.onGoing,
+        onSelected: (_) => _setFilter(BookingStatus.onGoing),
+      ),
+      ChoiceChip(
+        label: const Text('Completed'),
+        selected: _filterStatus == BookingStatus.completed,
+        onSelected: (_) => _setFilter(BookingStatus.completed),
+      ),
+      ChoiceChip(
+        label: const Text('Cancelled'),
+        selected: _filterStatus == BookingStatus.cancelled,
+        onSelected: (_) => _setFilter(BookingStatus.cancelled),
+      ),
+    ];
+
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: [
+          for (int index = 0; index < chips.length; index++) ...[
+            chips[index],
+            if (index != chips.length - 1) const SizedBox(width: 8),
+          ],
+        ],
+      ),
     );
   }
 
@@ -321,7 +330,10 @@ class _BookingMenuPageState extends State<BookingMenuPage>
     if (_filtered.isEmpty) {
       return Padding(
         padding: const EdgeInsets.only(top: 8),
-        child: _EmptyState(onRefresh: _loadBookings),
+        child: _EmptyState(
+          status: _filterStatus,
+          onRefresh: _loadBookings,
+        ),
       );
     }
 
@@ -412,12 +424,16 @@ class _BookingMenuPageState extends State<BookingMenuPage>
 // }
 
 class _EmptyState extends StatelessWidget {
-  const _EmptyState({required this.onRefresh});
+  const _EmptyState({required this.status, required this.onRefresh});
+
+  final BookingStatus? status;
 
   final Future<void> Function() onRefresh;
 
   @override
   Widget build(BuildContext context) {
+    final _EmptyStateContent content = _resolveContent(status);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(20),
@@ -432,31 +448,103 @@ class _EmptyState extends StatelessWidget {
             width: 72,
             height: 72,
             decoration: BoxDecoration(
-              color: AppColors.primary.withValues(alpha: 0.10),
+              color: content.iconBackground,
               shape: BoxShape.circle,
             ),
-            child: const Icon(Icons.history, size: 36, color: AppColors.primary),
+            child: Icon(content.icon, size: 36, color: content.iconColor),
           ),
           const SizedBox(height: 14),
           Text(
-            'Belum ada riwayat booking',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w800),
+            content.title,
+            style: Theme.of(context)
+                .textTheme
+                .titleMedium
+                ?.copyWith(fontWeight: FontWeight.w800),
             textAlign: TextAlign.center,
           ),
           const SizedBox(height: 6),
           Text(
-            'Setelah booking dibuat, riwayat reservasi akan muncul di sini.',
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: AppColors.mutedText),
+            content.message,
+            style: Theme.of(context)
+                .textTheme
+                .bodyMedium
+                ?.copyWith(color: AppColors.mutedText),
             textAlign: TextAlign.center,
           ),
-          const SizedBox(height: 16),
-          ElevatedButton.icon(
-            onPressed: () => onRefresh(),
-            icon: const Icon(Icons.refresh),
-            label: const Text('Muat Ulang'),
-          ),
+          // const SizedBox(height: 16),
+          // OutlinedButton.icon(
+          //   onPressed: () => onRefresh(),
+          //   icon: const Icon(Icons.refresh),
+          //   label: const Text('Muat Ulang'),
+          // ),
         ],
       ),
     );
   }
+
+  _EmptyStateContent _resolveContent(BookingStatus? status) {
+    switch (status) {
+      case BookingStatus.upcoming:
+        return const _EmptyStateContent(
+          icon: Icons.event_available_outlined,
+          iconColor: AppColors.primary,
+          iconBackground: Color(0x1A8B3A62),
+          title: 'Belum ada booking upcoming',
+          message:
+              'Booking yang sudah dibuat dan menunggu jadwal akan tampil di sini.',
+        );
+      case BookingStatus.onGoing:
+        return const _EmptyStateContent(
+          icon: Icons.schedule_outlined,
+          iconColor: Color(0xFF1F7A3D),
+          iconBackground: Color(0x1AE3F3E8),
+          title: 'Belum ada booking yang sedang berjalan',
+          message:
+              'Saat ada booking yang sedang diproses, daftar ini akan terisi otomatis.',
+        );
+      case BookingStatus.completed:
+        return const _EmptyStateContent(
+          icon: Icons.verified_outlined,
+          iconColor: Color(0xFF2952A3),
+          iconBackground: Color(0x1AE7EEFF),
+          title: 'Belum ada booking completed',
+          message:
+              'Booking yang sudah selesai akan muncul di tab completed.',
+        );
+      case BookingStatus.cancelled:
+        return const _EmptyStateContent(
+          icon: Icons.cancel_outlined,
+          iconColor: Color(0xFF9B314D),
+          iconBackground: Color(0x1AF5E4E7),
+          title: 'Belum ada booking cancelled',
+          message:
+              'Booking yang dibatalkan akan muncul di sini sebagai arsip.',
+        );
+      case null:
+        return const _EmptyStateContent(
+          icon: Icons.history,
+          iconColor: AppColors.primary,
+          iconBackground: Color(0x1A8B3A62),
+          title: 'Belum ada riwayat booking',
+          message:
+              'Setelah booking dibuat, riwayat reservasi akan muncul di sini.',
+        );
+    }
+  }
+}
+
+class _EmptyStateContent {
+  const _EmptyStateContent({
+    required this.icon,
+    required this.iconColor,
+    required this.iconBackground,
+    required this.title,
+    required this.message,
+  });
+
+  final IconData icon;
+  final Color iconColor;
+  final Color iconBackground;
+  final String title;
+  final String message;
 }

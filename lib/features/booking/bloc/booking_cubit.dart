@@ -321,7 +321,7 @@ class BookingCubit extends Cubit<BookingState> {
         subtotal: payment.subtotal,
         discount: payment.discountAmount,
         totalPrice: payment.totalPrice,
-        status: BookingStatus.pending,
+        status: BookingStatus.upcoming,
         createdAt: DateTime.now(),
       );
 

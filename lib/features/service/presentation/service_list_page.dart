@@ -4,7 +4,7 @@ import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../booking/presentation/booking_schedule_page.dart';
-import '../../booking/presentation/booking_menu_page.dart';
+import '../../shell/presentation/app_shell.dart';
 import '../bloc/service_cubit.dart';
 import '../data/service_model.dart';
 import '../data/service_repository.dart';
@@ -77,8 +77,13 @@ class _ServiceListViewState extends State<_ServiceListView> {
       if (!mounted) return;
 
       if (created != null) {
-        // After successful booking, navigate user to the Booking menu to see their booking.
-        Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BookingMenuPage()));
+        // After successful booking, navigate user to the Booking tab inside AppShell.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (_) => const AppShell(initialIndex: 3),
+          ),
+          (route) => false,
+        );
       }
     }();
   }

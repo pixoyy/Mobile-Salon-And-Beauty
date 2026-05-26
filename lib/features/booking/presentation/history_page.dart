@@ -132,14 +132,14 @@ class _HistoryPageState extends State<HistoryPage> {
           onSelected: (_) => _setFilter(null),
         ),
         ChoiceChip(
-          label: const Text('Pending'),
-          selected: _filterStatus == BookingStatus.pending,
-          onSelected: (_) => _setFilter(BookingStatus.pending),
+          label: const Text('Upcoming'),
+          selected: _filterStatus == BookingStatus.upcoming,
+          onSelected: (_) => _setFilter(BookingStatus.upcoming),
         ),
         ChoiceChip(
-          label: const Text('Confirmed'),
-          selected: _filterStatus == BookingStatus.confirmed,
-          onSelected: (_) => _setFilter(BookingStatus.confirmed),
+          label: const Text('On Going'),
+          selected: _filterStatus == BookingStatus.onGoing,
+          onSelected: (_) => _setFilter(BookingStatus.onGoing),
         ),
         ChoiceChip(
           label: const Text('Completed'),

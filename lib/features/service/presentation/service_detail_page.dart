@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
-import 'package:salon_and_beauty/features/booking/presentation/booking_menu_page.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../booking/presentation/booking_schedule_page.dart';
+import '../../shell/presentation/app_shell.dart';
 import '../data/service_model.dart';
 import '../data/service_repository.dart';
 
@@ -67,7 +67,12 @@ class ServiceDetailPage extends StatelessWidget {
 
                   if (!context.mounted) return;
                   if (created != null) {
-                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BookingMenuPage()));
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute<void>(
+                        builder: (_) => const AppShell(initialIndex: 3),
+                      ),
+                      (route) => false,
+                    );
                   }
                 },
                 icon: const Icon(Icons.calendar_month_outlined),

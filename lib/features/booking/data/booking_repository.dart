@@ -346,18 +346,18 @@ class BookingRepository {
     return true;
   }
 
-  bool _isWithinOperationalHours(String time, int durationMinutes) {
-    final int start = _timeToMinutes(time);
-    final int end = start + durationMinutes + _turnaroundMinutes;
-    final int operationalStart = _startHour * 60;
-    final int operationalEnd = _endHour * 60;
+  // bool _isWithinOperationalHours(String time, int durationMinutes) {
+  //   final int start = _timeToMinutes(time);
+  //   final int end = start + durationMinutes + _turnaroundMinutes;
+  //   final int operationalStart = _startHour * 60;
+  //   final int operationalEnd = _endHour * 60;
 
-    if (start == operationalEnd && durationMinutes <= _slotDurationMinutes) {
-      return true;
-    }
+  //   if (start == operationalEnd && durationMinutes <= _slotDurationMinutes) {
+  //     return true;
+  //   }
 
-    return start >= operationalStart && end <= operationalEnd;
-  }
+  //   return start >= operationalStart && end <= operationalEnd;
+  // }
 
   String? _availabilityFailureReason({
     required String stylistId,

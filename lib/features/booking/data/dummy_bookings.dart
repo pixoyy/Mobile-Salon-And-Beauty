@@ -12,7 +12,7 @@ class DummyBookings {
       subtotal: 270000,
       discount: 20000,
       totalPrice: 250000,
-      status: BookingStatus.pending,
+      status: BookingStatus.upcoming,
       notes: 'Ingin style natural untuk acara kantor.',
       createdAt: DateTime(2026, 5, 18, 20, 30),
     ),
@@ -26,7 +26,7 @@ class DummyBookings {
       subtotal: 390000,
       discount: 0,
       totalPrice: 390000,
-      status: BookingStatus.confirmed,
+      status: BookingStatus.onGoing,
       createdAt: DateTime(2026, 5, 19, 9, 45),
     ),
   ];

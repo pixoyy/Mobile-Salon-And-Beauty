@@ -211,7 +211,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
   }
 
   bool _canCancel(BookingStatus status) {
-    return status == BookingStatus.pending || status == BookingStatus.confirmed;
+    return status == BookingStatus.upcoming || status == BookingStatus.onGoing;
   }
 }
 
@@ -684,10 +684,10 @@ class _StatusChip extends StatelessWidget {
     final Color foregroundColor;
 
     switch (status) {
-      case BookingStatus.pending:
+      case BookingStatus.upcoming:
         backgroundColor = isLight ? Colors.white.withValues(alpha: 0.16) : const Color(0xFFFFF2CC);
         foregroundColor = isLight ? Colors.white : const Color(0xFF8A5B00);
-      case BookingStatus.confirmed:
+      case BookingStatus.onGoing:
         backgroundColor = isLight ? Colors.white.withValues(alpha: 0.16) : const Color(0xFFE3F3E8);
         foregroundColor = isLight ? Colors.white : const Color(0xFF1F7A3D);
       case BookingStatus.completed:
@@ -748,10 +748,10 @@ class _BookingDetailPayload {
 
 String _statusLabel(BookingStatus status) {
   switch (status) {
-    case BookingStatus.pending:
-      return 'Pending';
-    case BookingStatus.confirmed:
-      return 'Confirmed';
+    case BookingStatus.upcoming:
+      return 'Upcoming';
+    case BookingStatus.onGoing:
+      return 'On Going';
     case BookingStatus.completed:
       return 'Completed';
     case BookingStatus.cancelled:
