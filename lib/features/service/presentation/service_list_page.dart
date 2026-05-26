@@ -252,11 +252,6 @@ class _ServiceListViewState extends State<_ServiceListView> {
                     minimum: const EdgeInsets.fromLTRB(20, 0, 20, 16),
                     child: _ServiceCartSummary(
                       services: selectedServices,
-                      onRemoveService: (serviceId) {
-                        setState(() {
-                          _selectedServiceIds.remove(serviceId);
-                        });
-                      },
                       onContinue: () => _goToBooking(context),
                     ),
                   ),
@@ -479,12 +474,10 @@ class _ServiceCard extends StatelessWidget {
 class _ServiceCartSummary extends StatelessWidget {
   const _ServiceCartSummary({
     required this.services,
-    required this.onRemoveService,
     required this.onContinue,
   });
 
   final List<ServiceModel> services;
-  final ValueChanged<String> onRemoveService;
   final VoidCallback onContinue;
 
   int get _totalPrice => services.fold<int>(0, (sum, service) => sum + service.price);
@@ -501,7 +494,7 @@ class _ServiceCartSummary extends StatelessWidget {
         buffer.write('.');
       }
     }
-    return 'Rp${buffer.toString()}';
+    return 'Rp. ${buffer.toString()}';
   }
 
   @override
@@ -509,106 +502,90 @@ class _ServiceCartSummary extends StatelessWidget {
     return Material(
       color: AppColors.primary,
       borderRadius: BorderRadius.circular(24),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(24),
-        onTap: onContinue,
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(24),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.20),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(10),
-                    decoration: BoxDecoration(
-                      color: Colors.white.withValues(alpha: 0.18),
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.white),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.20),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(18),
                   ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Cart layanan',
-                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w800,
-                              ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          '${services.length} layanan • ${_totalDuration} menit',
-                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                color: Colors.white.withValues(alpha: 0.88),
-                              ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    _formatPrice(_totalPrice),
-                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          color: Colors.white,
-                          fontWeight: FontWeight.w800,
-                        ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 14),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: services
-                    .map(
-                      (service) => InputChip(
-                        onPressed: onContinue,
-                        onDeleted: () => onRemoveService(service.id),
-                        deleteIconColor: Colors.white,
-                        backgroundColor: Colors.white.withValues(alpha: 0.14),
-                        side: BorderSide(color: Colors.white.withValues(alpha: 0.16)),
-                        label: Text(
-                          service.name,
-                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                                color: Colors.white,
-                                fontWeight: FontWeight.w700,
-                              ),
-                        ),
-                        labelStyle: const TextStyle(color: Colors.white),
-                      ),
-                    )
-                    .toList(growable: false),
-              ),
-              const SizedBox(height: 14),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  style: ElevatedButton.styleFrom(
-                    minimumSize: const Size.fromHeight(52),
-                    backgroundColor: Colors.white,
-                    foregroundColor: AppColors.primaryDark,
-                  ),
-                  onPressed: onContinue,
-                  icon: const Icon(Icons.arrow_forward_rounded),
-                  label: const Text('Lanjut ke Booking'),
+                  child: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.white, size: 26),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Cart Layanan',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                          Text(
+                            _formatPrice(_totalPrice),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${services.length} layanan • $_totalDuration menit',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: onContinue,
+                icon: const Icon(Icons.arrow_forward_rounded),
+                label: const Text('Lanjut ke Booking'),
               ),
-            ],
-          ),
+            ),
+          ],
         ),
       ),
     );
