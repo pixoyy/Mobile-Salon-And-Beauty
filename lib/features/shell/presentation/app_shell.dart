@@ -16,7 +16,7 @@ class AppShell extends StatefulWidget {
 
 class _AppShellState extends State<AppShell> {
   int _currentIndex = 0;
-  // int _bookingTabVersion = 0;
+  int _bookingTabVersion = 0;
   // int _historyTabVersion = 0;
 
   @override
@@ -25,7 +25,7 @@ class _AppShellState extends State<AppShell> {
       const DashboardPage(),
       const StylistListPage(),
       const ServiceListPage(),
-      const BookingMenuPage(),
+      BookingMenuPage(key: ValueKey<int>(_bookingTabVersion)),
       const UserMenuPage(),
       // BookingMenuPage(key: ValueKey<int>(_bookingTabVersion)),
       // HistoryPage(key: ValueKey<int>(_historyTabVersion)),
@@ -41,6 +41,9 @@ class _AppShellState extends State<AppShell> {
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
+            if (index == 3) {
+              _bookingTabVersion++;
+            }
           });
         },
         destinations: const [

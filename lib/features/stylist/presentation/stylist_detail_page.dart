@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_menu_page.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../bloc/stylist_cubit.dart';
@@ -66,8 +68,15 @@ class _StylistDetailView extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => BookingSchedulePage(prefillStylistId: stylist.id)));
+                      onPressed: () async {
+                        final BookingModel? created = await Navigator.of(context).push<BookingModel?>(
+                          MaterialPageRoute<BookingModel?>(builder: (_) => BookingSchedulePage(prefillStylistId: stylist.id)),
+                        );
+
+                        if (!context.mounted) return;
+                        if (created != null) {
+                          Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BookingMenuPage()));
+                        }
                       },
                       icon: const Icon(Icons.calendar_month_outlined),
                       label: const Text('Book Stylist'),

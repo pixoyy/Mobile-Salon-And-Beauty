@@ -1,14 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/models/discount.dart';
-
-import '../../user/data/dummy_user.dart';
+import '../../../core/session/auth_session.dart';
 import '../../service/data/service_model.dart';
 import '../../stylist/data/stylist_model.dart';
 import '../bloc/booking_cubit.dart';
 
-class CheckoutPage extends StatelessWidget {
+class CheckoutPage extends StatefulWidget {
   const CheckoutPage({
     required this.stylists,
     required this.services,
@@ -19,154 +17,182 @@ class CheckoutPage extends StatelessWidget {
   final List<ServiceModel> services;
 
   @override
-  Widget build(BuildContext context) {
-    return _CheckoutView(stylists: stylists, services: services);
-  }
+  State<CheckoutPage> createState() => _CheckoutPageState();
 }
 
-class _CheckoutView extends StatelessWidget {
-  const _CheckoutView({required this.stylists, required this.services});
-
-  final List<StylistModel> stylists;
-  final List<ServiceModel> services;
-
-  /// 🔥 DATA PROMO (GLOBAL DI CHECKOUT)
-  static final List<Discount> discounts = [
-    Discount(
-      code: "JULY20",
-      title: "Promo Juli",
-      percent: 20,
-      maxAmount: 50000,
-      minSpend: 100000,
-      startDate: DateTime(2026, 7, 1),
-      endDate: DateTime(2026, 7, 31),
-    ),
-    Discount(
-      code: "AUG15",
-      title: "Promo Agustus",
-      percent: 15,
-      maxAmount: 30000,
-      minSpend: 80000,
-      startDate: DateTime(2026, 8, 1),
-      endDate: DateTime(2026, 8, 31),
-    ),
-  ];
-
-  /// 🔥 FUNCTION CARI PROMO BERDASARKAN TANGGAL
-  Discount? getDiscountByDate(DateTime date) {
-    for (final d in discounts) {
-      final isInRange =
-          date.isAfter(d.startDate.subtract(const Duration(days: 1))) &&
-          date.isBefore(d.endDate.add(const Duration(days: 1)));
-
-      if (isInRange) return d;
-    }
-    return null;
-  }
+class _CheckoutPageState extends State<CheckoutPage> {
+  late Future<BookingCheckoutSnapshot> _snapshotFuture;
 
   @override
+  void initState() {
+    super.initState();
+    _snapshotFuture = context.read<BookingCubit>().buildCheckoutSnapshot();
+  }
+  @override
   Widget build(BuildContext context) {
-    return BlocBuilder<BookingCubit, BookingState>(
-      builder: (context, state) {
-        final BookingScheduleState scheduleState = context
-            .read<BookingCubit>()
-            .scheduleState;
+    return BlocConsumer<BookingCubit, BookingState>(
+      listener: (context, state) {
+        if (state is BookingError) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(state.message)),
+          );
+        }
 
-        final snapshot = _buildSnapshot(scheduleState);
+        if (state is BookingSuccess) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Booking berhasil dikonfirmasi.')),
+          );
+
+          // Return the created booking as the result to the caller so callers
+          // (BookingSchedulePage, ServiceListPage, etc.) can react and refresh.
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (!mounted) return;
+            Navigator.of(context).pop(state.booking);
+          });
+        }
+      },
+      builder: (context, state) {
+        final bool isSubmitting = state is BookingLoading;
 
         return Scaffold(
           appBar: AppBar(title: const Text('Checkout Booking')),
-          body: ListView(
-            padding: const EdgeInsets.all(20),
-            children: [
-              /// CUSTOMER
-              Text(
-                DummyUser.activeCustomer.name,
-                style: const TextStyle(fontWeight: FontWeight.bold),
-              ),
-              Text(DummyUser.activeCustomer.email),
+          body: FutureBuilder<BookingCheckoutSnapshot>(
+            future: _snapshotFuture,
+            builder: (context, snapshot) {
+              if (snapshot.hasError) {
+                return const Center(
+                  child: Text('Gagal memuat ringkasan checkout.'),
+                );
+              }
 
-              const SizedBox(height: 20),
+              if (!snapshot.hasData) {
+                return const Center(child: CircularProgressIndicator());
+              }
 
-              /// BOOKING INFO
-              Text(snapshot.dateTimeLabel),
+              final BookingCheckoutSnapshot checkout = snapshot.data!;
+              final StylistModel? selectedStylist = widget.stylists
+                  .where((stylist) => stylist.id == checkout.scheduleState.selectedStylistId)
+                  .cast<StylistModel?>()
+                  .firstOrNull;
 
-              const SizedBox(height: 20),
+              return ListView(
+                padding: const EdgeInsets.all(20),
+                children: [
+                  Text(
+                    AuthSession.activeUser.name,
+                    style: const TextStyle(fontWeight: FontWeight.bold),
+                  ),
+                  Text(AuthSession.activeUser.email),
 
-              /// SERVICES
-              ...snapshot.selectedServices.map(
-                (service) => Row(
-                  children: [
-                    Expanded(child: Text(service.name)),
-                    Text(_toRupiah(service.price)),
-                  ],
-                ),
-              ),
+                  const SizedBox(height: 20),
 
-              const SizedBox(height: 20),
+                  _SectionCard(
+                    title: 'Ringkasan Booking',
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(_dateTimeLabel(checkout.scheduleState)),
+                        const SizedBox(height: 8),
+                        Text(selectedStylist?.name ?? '-'),
+                        const SizedBox(height: 8),
+                        Text(checkout.scheduleState.selectedTime ?? '-'),
+                      ],
+                    ),
+                  ),
 
-              /// PAYMENT
-              _priceRow('Subtotal', _toRupiah(snapshot.subtotal)),
+                  const SizedBox(height: 16),
 
-              _priceRow(
-                snapshot.discountLabel,
-                '- ${_toRupiah(snapshot.discountAmount)}',
-                valueColor: Colors.green,
-              ),
+                  _SectionCard(
+                    title: 'Service Dipilih',
+                    child: Column(
+                      children: checkout.selectedServices
+                          .map(
+                            (service) => Padding(
+                              padding: const EdgeInsets.only(bottom: 8),
+                              child: Row(
+                                children: [
+                                  Expanded(child: Text(service.name)),
+                                  Text(_toRupiah(service.price)),
+                                ],
+                              ),
+                            ),
+                          )
+                          .toList(growable: false),
+                    ),
+                  ),
 
-              const Divider(),
+                  const SizedBox(height: 16),
 
-              _priceRow('Total', _toRupiah(snapshot.total), isStrong: true),
-            ],
+                  _SectionCard(
+                    title: 'Pembayaran',
+                    child: Column(
+                      children: [
+                        _priceRow('Subtotal', _toRupiah(checkout.payment.subtotal)),
+                        const SizedBox(height: 8),
+                        _priceRow(
+                          checkout.discountLabel,
+                          '- ${_toRupiah(checkout.payment.discountAmount)}',
+                          valueColor: Colors.green,
+                        ),
+                        const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 12),
+                          child: Divider(),
+                        ),
+                        _priceRow(
+                          'Total Pembayaran',
+                          _toRupiah(checkout.payment.totalPrice),
+                          isStrong: true,
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+
+                  Row(
+                    children: [
+                      Expanded(
+                        child: OutlinedButton(
+                          onPressed: isSubmitting ? null : () => Navigator.of(context).maybePop(),
+                          child: const Text('Kembali'),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: FilledButton(
+                          onPressed: isSubmitting
+                              ? null
+                              : () => context.read<BookingCubit>().confirmBooking(),
+                          child: isSubmitting
+                              ? const SizedBox(
+                                  width: 18,
+                                  height: 18,
+                                  child: CircularProgressIndicator(strokeWidth: 2),
+                                )
+                              : const Text('Konfirmasi Booking'),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+              );
+            },
           ),
         );
       },
     );
   }
 
-  /// 🔥 SNAPSHOT (INI INTI LOGIC)
-  _CheckoutSnapshot _buildSnapshot(BookingScheduleState state) {
-    final List<ServiceModel> selectedServices = services
-        .where((service) => state.selectedServiceIds.contains(service.id))
-        .toList();
-
-    final int subtotal = selectedServices.fold(0, (sum, s) => sum + s.price);
-
-    final DateTime? selectedDate = state.selectedDate;
-
-    final Discount? discount = selectedDate != null
-        ? getDiscountByDate(selectedDate)
-        : null;
-
-    int discountAmount = 0;
-    String discountLabel = 'Tidak ada diskon';
-
-    if (discount != null && subtotal >= discount.minSpend) {
-      final percentValue = ((subtotal * discount.percent) / 100).round();
-
-      discountAmount = percentValue > discount.maxAmount
-          ? discount.maxAmount
-          : percentValue;
-
-      discountLabel =
-          'Diskon ${discount.code} (${discount.percent}% maks Rp${discount.maxAmount})';
+  String _dateTimeLabel(BookingScheduleState state) {
+    if (state.selectedDate == null) {
+      return '-';
     }
 
-    return _CheckoutSnapshot(
-      dateTimeLabel: _dateTimeLabel(state),
-      selectedServices: selectedServices,
-      subtotal: subtotal,
-      discountAmount: discountAmount,
-      total: subtotal - discountAmount,
-      discountLabel: discountLabel,
-    );
-  }
-
-  String _dateTimeLabel(BookingScheduleState state) {
-    if (state.selectedDate == null) return '-';
-
-    final date = state.selectedDate!;
-    return "${date.day}/${date.month}/${date.year}";
+    final DateTime date = state.selectedDate!;
+    final String day = date.day.toString().padLeft(2, '0');
+    final String month = date.month.toString().padLeft(2, '0');
+    final String year = date.year.toString();
+    return '$day/$month/$year ${state.selectedTime ?? ''}'.trim();
   }
 
   Widget _priceRow(
@@ -178,7 +204,8 @@ class _CheckoutView extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(label),
+        Expanded(child: Text(label)),
+        const SizedBox(width: 12),
         Text(
           value,
           style: TextStyle(
@@ -191,24 +218,62 @@ class _CheckoutView extends StatelessWidget {
   }
 
   String _toRupiah(int value) {
-    return "Rp$value";
+    final String digits = value.toString();
+    final StringBuffer buffer = StringBuffer();
+
+    for (int i = 0; i < digits.length; i++) {
+      final int reverseIndex = digits.length - i;
+      buffer.write(digits[i]);
+      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+
+    return 'Rp$buffer';
   }
 }
 
-class _CheckoutSnapshot {
-  final String dateTimeLabel;
-  final List<ServiceModel> selectedServices;
-  final int subtotal;
-  final int discountAmount;
-  final int total;
-  final String discountLabel;
-
-  _CheckoutSnapshot({
-    required this.dateTimeLabel,
-    required this.selectedServices,
-    required this.subtotal,
-    required this.discountAmount,
-    required this.total,
-    required this.discountLabel,
+class _SectionCard extends StatelessWidget {
+  const _SectionCard({
+    required this.title,
+    required this.child,
   });
+
+  final String title;
+  final Widget child;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: Theme.of(context).colorScheme.surface,
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  fontWeight: FontWeight.w700,
+                ),
+          ),
+          const SizedBox(height: 8),
+          child,
+        ],
+      ),
+    );
+  }
+}
+
+extension<T> on Iterable<T> {
+  T? get firstOrNull {
+    if (isEmpty) {
+      return null;
+    }
+
+    return first;
+  }
 }

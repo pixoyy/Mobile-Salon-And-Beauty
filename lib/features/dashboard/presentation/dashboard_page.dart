@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
-import '../../../core/models/discount.dart';
+import '../../../core/data/dummy_discounts.dart';
 import '../../../core/theme/app_colors.dart';
 
 import '../bloc/dashboard_cubit.dart';
@@ -36,56 +36,7 @@ class _DiscountSliderState extends State<_DiscountSlider> {
 
   double _currentPage = 0;
 
-  final List<Discount> discounts = [
-    Discount(
-      code: "GLAMORA20",
-      title: "All Hair Treatment",
-      percent: 20,
-      maxAmount: 50000,
-      minSpend: 100000,
-      startDate: DateTime(2026, 5, 1),
-      endDate: DateTime(2026, 5, 31),
-    ),
-
-    Discount(
-      code: "NAIL30",
-      title: "Nail Art & Spa",
-      percent: 30,
-      maxAmount: 75000,
-      minSpend: 150000,
-      startDate: DateTime(2026, 6, 1),
-      endDate: DateTime(2026, 6, 30),
-    ),
-
-    Discount(
-      code: "FACIAL15",
-      title: "Premium Facial",
-      percent: 15,
-      maxAmount: 30000,
-      minSpend: 90000,
-      startDate: DateTime(2026, 7, 1),
-      endDate: DateTime(2026, 7, 31),
-    ),
-    Discount(
-      code: "KERATIN35",
-      title: "Keratin Smooth Hair",
-      percent: 35,
-      maxAmount: 85000,
-      minSpend: 200000,
-      startDate: DateTime(2026, 10, 1),
-      endDate: DateTime(2026, 10, 31),
-    ),
-
-    Discount(
-      code: "WEDDING50",
-      title: "Wedding Package",
-      percent: 50,
-      maxAmount: 200000,
-      minSpend: 500000,
-      startDate: DateTime(2026, 11, 1),
-      endDate: DateTime(2026, 11, 30),
-    ),
-  ];
+  final List discounts = DummyDiscounts.data;
 
   @override
   void initState() {

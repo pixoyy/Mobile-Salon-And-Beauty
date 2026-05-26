@@ -52,6 +52,8 @@ class ServiceListCubit extends Cubit<ServiceListState> {
   final ServiceRepository _repository;
   List<ServiceModel> _allServices = [];
 
+  List<ServiceModel> get allServices => List<ServiceModel>.unmodifiable(_allServices);
+
   Future<void> loadServices({bool showLoading = true}) async {
     if (showLoading) {
       emit(state.copyWith(status: ServiceStatus.loading, clearError: true));

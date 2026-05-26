@@ -2,19 +2,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 
 import 'package:salon_and_beauty/features/booking/presentation/history_page.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_preview_card.dart';
 
 void main() {
   group('HistoryPage Widget Tests', () {
     testWidgets('displays filter chips for status filtering', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
-      // Verify all filter chips are present
-      expect(find.text('Semua'), findsOneWidget);
-      expect(find.text('Pending'), findsOneWidget);
-      expect(find.text('Confirmed'), findsOneWidget);
-      expect(find.text('Completed'), findsOneWidget);
-      expect(find.text('Dibatalkan'), findsOneWidget);
+      // Verify all filter chips are present (as ChoiceChip ancestors)
+      expect(find.ancestor(of: find.text('Semua'), matching: find.byType(ChoiceChip)), findsWidgets);
+      expect(find.ancestor(of: find.text('Pending'), matching: find.byType(ChoiceChip)), findsWidgets);
+      expect(find.ancestor(of: find.text('Confirmed'), matching: find.byType(ChoiceChip)), findsWidgets);
+      expect(find.ancestor(of: find.text('Completed'), matching: find.byType(ChoiceChip)), findsWidgets);
+      expect(find.ancestor(of: find.text('Dibatalkan'), matching: find.byType(ChoiceChip)), findsWidgets);
 
       // Verify chips are ChoiceChips
       expect(find.byType(ChoiceChip), findsAtLeastNWidgets(5));
@@ -22,25 +23,21 @@ void main() {
 
     testWidgets('tap filter chip updates selection', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
-      // Tap "Pending" chip
-      await tester.tap(find.text('Pending'));
-      await tester.pump(const Duration(milliseconds: 200));
+      // Tap the first ChoiceChip instance that contains the 'Pending' label
+      final Finder pendingChip = find.ancestor(of: find.text('Pending'), matching: find.byType(ChoiceChip)).at(0);
+      await tester.tap(pendingChip);
+      await tester.pumpAndSettle();
 
-      // Verify chip state changed (no assertion on UI filtering since data depends on repo)
-      final ChoiceChip chip = tester.widget<ChoiceChip>(
-        find.ancestor(
-          of: find.text('Pending'),
-          matching: find.byType(ChoiceChip),
-        ),
-      );
+      // Verify chip state changed
+      final ChoiceChip chip = tester.widget<ChoiceChip>(pendingChip);
       expect(chip.selected, isTrue);
     });
 
     testWidgets('app has title Riwayat in appbar', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
 
       final Finder appBar = find.byType(AppBar);
       expect(appBar, findsOneWidget);
@@ -51,42 +48,45 @@ void main() {
 
     testWidgets('displays booking list or empty state', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pump(const Duration(seconds: 1));
+      await tester.pumpAndSettle();
 
-      // Either a booking list item exists or empty state message
-      // final Finder bookingCards = find.byType(Material);
+      // Either a booking preview card exists or empty state message
+      final Finder bookingCards = find.byType(BookingPreviewCard);
       final Finder emptyState = find.text('Belum ada riwayat booking');
 
+      // Wait up to ~2 seconds for async load to finish, then assert
+      for (int i = 0; i < 4; i++) {
+        if (bookingCards.evaluate().isNotEmpty || emptyState.evaluate().isNotEmpty) {
+          break;
+        }
+        await tester.pump(const Duration(milliseconds: 500));
+      }
+
       expect(
-        find.byType(ListTile).evaluate().isNotEmpty ||
-            emptyState.evaluate().isNotEmpty,
+        bookingCards.evaluate().isNotEmpty || emptyState.evaluate().isNotEmpty,
         isTrue,
       );
     });
 
     testWidgets('refresh indicator present in page', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pump(const Duration(milliseconds: 300));
+      await tester.pumpAndSettle();
 
       expect(find.byType(RefreshIndicator), findsOneWidget);
     });
 
     testWidgets('all filter chips can be selected in sequence', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pump(const Duration(milliseconds: 500));
+      await tester.pumpAndSettle();
 
       final List<String> filterLabels = ['Semua', 'Pending', 'Confirmed', 'Completed', 'Dibatalkan'];
 
       for (final String label in filterLabels) {
-        await tester.tap(find.text(label));
-        await tester.pump(const Duration(milliseconds: 200));
+        final Finder chipFinder = find.ancestor(of: find.text(label), matching: find.byType(ChoiceChip)).at(0);
+        await tester.tap(chipFinder);
+        await tester.pumpAndSettle();
 
-        final ChoiceChip chip = tester.widget<ChoiceChip>(
-          find.ancestor(
-            of: find.text(label),
-            matching: find.byType(ChoiceChip),
-          ),
-        );
+        final ChoiceChip chip = tester.widget<ChoiceChip>(chipFinder);
         expect(chip.selected, isTrue);
       }
     });

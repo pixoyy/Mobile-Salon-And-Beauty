@@ -1,4 +1,6 @@
 import 'package:flutter/material.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_menu_page.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../booking/presentation/booking_schedule_page.dart';
@@ -56,12 +58,17 @@ class ServiceDetailPage extends StatelessWidget {
               width: double.infinity,
               child: ElevatedButton.icon(
                 style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-                onPressed: () {
-                  Navigator.of(context).push(
-                    MaterialPageRoute(
+                onPressed: () async {
+                  final BookingModel? created = await Navigator.of(context).push<BookingModel?>(
+                    MaterialPageRoute<BookingModel?>(
                       builder: (_) => BookingSchedulePage(prefillServiceIds: [service.id]),
                     ),
                   );
+
+                  if (!context.mounted) return;
+                  if (created != null) {
+                    Navigator.of(context).push(MaterialPageRoute(builder: (_) => const BookingMenuPage()));
+                  }
                 },
                 icon: const Icon(Icons.calendar_month_outlined),
                 label: const Text('Book Layanan'),

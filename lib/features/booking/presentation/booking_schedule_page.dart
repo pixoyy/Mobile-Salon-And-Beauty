@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../service/data/service_model.dart';
@@ -57,6 +58,10 @@ class _BookingScheduleViewState extends State<_BookingScheduleView> {
     '15:00',
     '16:00',
     '17:00',
+    '18:00',
+    '19:00',
+    '20:00',
+    
   ];
 
   final TextEditingController _notesController = TextEditingController();
@@ -517,14 +522,25 @@ class _BookingScheduleViewState extends State<_BookingScheduleView> {
   }
 
   void _goToCheckout(BuildContext context, BookingScheduleState scheduleState) {
-    Navigator.of(context).push(
-      MaterialPageRoute<void>(
-        builder: (_) => CheckoutPage(
-          stylists: _stylists,
-          services: _services,
+    // Navigate to checkout and await created booking result; bubble it up
+    // to the caller so they can react and refresh booking lists.
+    () async {
+      final BookingModel? created = await Navigator.of(context).push<BookingModel?>(
+        MaterialPageRoute<BookingModel?>(
+          builder: (_) => CheckoutPage(
+            stylists: _stylists,
+            services: _services,
+          ),
         ),
-      ),
-    );
+      );
+
+      if (!mounted) return;
+
+      if (created != null) {
+        // Bubble the created booking to whoever opened BookingSchedulePage.
+        Navigator.of(context).pop(created);
+      }
+    }();
   }
 
   void _showValidationSnackbar(BuildContext context, BookingScheduleState state) {

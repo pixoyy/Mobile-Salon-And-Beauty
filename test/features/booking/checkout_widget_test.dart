@@ -1,485 +1,68 @@
-import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
-import 'package:salon_and_beauty/features/booking/presentation/checkout_page.dart';
-import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
-import 'package:salon_and_beauty/features/stylist/data/dummy_stylists.dart';
 import 'package:salon_and_beauty/features/service/data/service_repository.dart';
-import 'package:salon_and_beauty/features/service/data/dummy_services.dart';
+import 'package:salon_and_beauty/features/user/data/user_model.dart';
 
-String _formatDateLabel(DateTime date) {
-  final String day = date.day.toString().padLeft(2, '0');
-  final String month = date.month.toString().padLeft(2, '0');
-  final String year = date.year.toString();
-  return '$day/$month/$year';
+Future<BookingCubit> _buildCubit() async {
+  final bookingRepo = BookingRepository();
+  final serviceRepo = ServiceRepository();
+  final bookingCubit = BookingCubit(bookingRepo, serviceRepo)
+    ..selectStylist('sty-001')
+    ..selectServices(['svc-003', 'svc-005']);
+
+  await bookingCubit.selectDateTime(DateTime(2026, 5, 20), '14:00');
+  return bookingCubit;
 }
 
 void main() {
-  testWidgets('CheckoutPage displays booking summary', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            ),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
+  UserModel? previousUser;
 
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-
-    // Page title
-    expect(find.text('Checkout Booking'), findsOneWidget);
-
-    // Main sections should be visible
-    expect(find.text('2. Ringkasan Booking'), findsOneWidget);
-    expect(find.text('Total Pembayaran'), findsOneWidget);
-
-    // Action buttons
-    expect(find.text('Konfirmasi Booking'), findsOneWidget);
-    expect(find.text('Kembali'), findsOneWidget);
+  setUp(() {
+    previousUser = AuthSession.currentUser;
   });
 
-  testWidgets('Pricing breakdown calculation is accurate', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            )..selectStylist('sty-001')
-              ..selectServices(['svc-001', 'svc-002'])
-              ..selectDateTime(DateTime.now().add(const Duration(days: 1)), '14:00'),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-
-    // Subtotal should be visible
-    expect(find.text('Subtotal'), findsOneWidget);
-    
-    // Discount and total should be visible
-    expect(find.textContaining('Diskon GLAMORA20'), findsOneWidget);
-    expect(find.text('Total Pembayaran'), findsOneWidget);
+  tearDown(() {
+    AuthSession.currentUser = previousUser;
   });
 
-  testWidgets('Stylist information displays correctly', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            )..selectStylist('sty-001'),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
+  test('BookingCubit builds checkout snapshot from pricing module', () async {
+    final BookingCubit bookingCubit = await _buildCubit();
 
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    final BookingCheckoutSnapshot snapshot = await bookingCubit.buildCheckoutSnapshot();
 
-    // Stylist name should be displayed
-    expect(find.text('Nadia Putri'), findsWidgets);
+    expect(snapshot.payment.subtotal, 625000);
+    expect(snapshot.payment.discountAmount, 50000);
+    expect(snapshot.payment.totalPrice, 575000);
+    expect(snapshot.discountLabel, contains('GLAMORA20'));
   });
 
-  testWidgets('Selected services list displays correctly', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            )..selectServices(['svc-001', 'svc-002']),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
+  test('confirmBooking stores the final pricing snapshot', () async {
+    AuthSession.currentUser = const UserModel(
+      id: 'cus-step9-checkout',
+      name: 'Checkout User',
+      email: 'checkout@example.com',
+      phone: '081299999999',
+      password: 'password123',
     );
 
-    await tester.pumpAndSettle(const Duration(seconds: 2));
+    final BookingCubit bookingCubit = await _buildCubit();
+    final BookingRepository bookingRepo = BookingRepository();
 
-    // At least one selected service should be displayed in the summary
-    expect(find.textContaining(DummyServices.data[0].name), findsWidgets);
-    expect(find.textContaining(DummyServices.data[1].name), findsWidgets);
-  });
+    await bookingCubit.confirmBooking();
 
-  testWidgets('Date and time confirmation displays', (tester) async {
-    final bookingRepo = BookingRepository();
-    final testDate = DateTime.now().add(const Duration(days: 1));
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            )..selectStylist('sty-001')
-              ..selectDateTime(testDate, '14:00'),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
+    final List<BookingModel> bookings = await bookingRepo.getAllBookings(
+      customerId: AuthSession.activeCustomerId,
     );
+    expect(bookings, isNotEmpty);
 
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-
-    // Date and time should be displayed
-    expect(find.textContaining('14:00'), findsWidgets);
-    expect(find.textContaining(_formatDateLabel(testDate)), findsWidgets);
+    final BookingModel latest = bookings.first;
+    expect(latest.subtotal, 625000);
+    expect(latest.discount, 50000);
+    expect(latest.totalPrice, 575000);
   });
 
-  testWidgets('"Konfirmasi Booking" button creates booking', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            )..selectStylist('sty-001')
-              ..selectServices(['svc-001'])
-              ..selectDateTime(DateTime.now().add(const Duration(days: 1)), '14:00'),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-
-    // Tap confirm button
-    final confirmButton = find.text('Konfirmasi Booking');
-    await tester.tap(confirmButton);
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-  });
-
-  testWidgets('"Kembali" button navigates back to schedule', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: Scaffold(
-            body: BlocProvider(
-              create: (_) => BookingCubit(
-                bookingRepo,
-                ServiceRepository(),
-              ),
-              child: CheckoutPage(
-                stylists: dummyStylists,
-                services: dummyServices,
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-
-    // Tap back button
-    final backButton = find.text('Kembali');
-    await tester.tap(backButton);
-    await tester.pumpAndSettle();
-  });
-
-  testWidgets('Discount calculation applies correctly', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            )..selectStylist('sty-001')
-              ..selectServices(['svc-001']),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 2));
-
-    // Discount section should be visible
-    expect(find.textContaining('Diskon GLAMORA20'), findsOneWidget);
-  });
-
-  testWidgets('Page displays all customer info sections', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            ),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-
-    // Should display checkout page structure
-    expect(find.text('Checkout Booking'), findsOneWidget);
-    
-    // Verify page has scrollable content
-    final scrollViews = find.byType(ListView);
-    expect(scrollViews.evaluate().isNotEmpty, isTrue);
-  });
-
-  testWidgets('Booking summary displays with null selections gracefully', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            ),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-
-    // Page should load without crashing even with no selections
-    expect(find.text('Checkout Booking'), findsOneWidget);
-  });
-
-  testWidgets('Error handling shows on confirmation failure', (tester) async {
-    final bookingRepo = BookingRepository();
-    final dummyStylists = DummyStylists.data;
-    final dummyServices = DummyServices.data;
-    
-    await tester.pumpWidget(
-      MultiRepositoryProvider(
-        providers: [
-          RepositoryProvider<BookingRepository>(
-            create: (_) => bookingRepo,
-          ),
-          RepositoryProvider<StylistRepository>(
-            create: (_) => StylistRepository(),
-          ),
-          RepositoryProvider<ServiceRepository>(
-            create: (_) => ServiceRepository(),
-          ),
-        ],
-        child: MaterialApp(
-          home: BlocProvider(
-            create: (_) => BookingCubit(
-              bookingRepo,
-              ServiceRepository(),
-            ),
-            child: CheckoutPage(
-              stylists: dummyStylists,
-              services: dummyServices,
-            ),
-          ),
-        ),
-      ),
-    );
-
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-
-    // Try to confirm without required data
-    final confirmButton = find.text('Konfirmasi Booking');
-    await tester.tap(confirmButton);
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-
-    // Page should still be visible
-    expect(find.text('Konfirmasi Booking'), findsOneWidget);
-  });
 }

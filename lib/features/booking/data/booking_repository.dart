@@ -1,6 +1,9 @@
 import 'booking_model.dart';
 import 'dummy_bookings.dart';
+import '../../service/data/dummy_services.dart';
+import '../../service/data/service_repository.dart';
 import '../../stylist/data/dummy_stylists.dart';
+import '../../../core/session/auth_session.dart';
 
 class BookingRepository {
   static final BookingRepository _instance = BookingRepository._internal();
@@ -13,9 +16,11 @@ class BookingRepository {
     _initializeDummyBookings();
   }
 
-  static const String _activeCustomerId = 'demo-001';
+  static String get _activeCustomerId => AuthSession.activeCustomerId;
   static const int _startHour = 9;
-  static const int _endHour = 17;
+  static const int _endHour = 20;
+  static const int _slotDurationMinutes = 60;
+  static const int _turnaroundMinutes = 0;
 
   final List<BookingModel> _bookings = <BookingModel>[];
 
@@ -58,10 +63,13 @@ class BookingRepository {
   Future<BookingModel> createBooking(BookingModel booking) async {
     await Future<void>.delayed(const Duration(milliseconds: 260));
 
+    final int bookingDurationMinutes = await _resolveBookingDurationMinutes(booking.serviceIds);
+
     final bool isAvailable = await checkAvailability(
       booking.stylistId,
       booking.bookingDate,
       booking.bookingTime,
+      durationMinutes: bookingDurationMinutes,
     );
 
     if (!isAvailable) {
@@ -91,6 +99,7 @@ class BookingRepository {
       nextBooking.stylistId,
       nextBooking.bookingDate,
       nextBooking.bookingTime,
+      durationMinutes: await _resolveBookingDurationMinutes(nextBooking.serviceIds),
       excludedBookingId: id,
     );
 
@@ -117,31 +126,31 @@ class BookingRepository {
   Future<List<String>> getAvailableSlotsForStylist(
     String stylistId,
     DateTime date,
+    {int durationMinutes = 0}
   ) async {
+    print('DBG: BookingRepository.getAvailableSlotsForStylist start: $stylistId ${date.toIso8601String()} duration=$durationMinutes');
     await Future<void>.delayed(const Duration(milliseconds: 200));
 
     final List<String> allSlots = _buildDefaultSlots();
-    final List<String> bookedSlots = _bookings
-        .where(
-          (booking) =>
-              booking.stylistId == stylistId &&
-              _isSameDate(booking.bookingDate, date) &&
-              booking.status != BookingStatus.cancelled,
-        )
-        .map((booking) => _normalizeTime(booking.bookingTime))
-        .whereType<String>()
-        .toSet()
-        .toList(growable: false);
+    final int duration = durationMinutes > 0 ? durationMinutes : _slotDurationMinutes;
 
-    return allSlots
-        .where((slot) => !bookedSlots.contains(slot))
-        .toList(growable: false);
+    final List<String> result = allSlots.where((slot) {
+      return _isSlotAvailable(
+        stylistId: stylistId,
+        date: date,
+        time: slot,
+        durationMinutes: duration,
+      );
+    }).toList(growable: false);
+    print('DBG: BookingRepository.getAvailableSlotsForStylist result: ${result.length} slots');
+    return result;
   }
 
   Future<bool> checkAvailability(
     String stylistId,
     DateTime date,
     String time, {
+    int durationMinutes = 0,
     String? excludedBookingId,
   }) async {
     await Future<void>.delayed(const Duration(milliseconds: 140));
@@ -152,28 +161,18 @@ class BookingRepository {
       return false;
     }
 
-    for (final booking in _bookings) {
-      if (excludedBookingId != null && booking.id == excludedBookingId) {
-        continue;
-      }
-
-      final String? existingTime = _normalizeTime(booking.bookingTime);
-      if (existingTime == null) {
-        continue;
-      }
-
-      final bool hasConflict =
-          booking.stylistId == stylistId &&
-          _isSameDate(booking.bookingDate, date) &&
-          existingTime == normalizedTime &&
-          booking.status != BookingStatus.cancelled;
-
-      if (hasConflict) {
-        return false;
-      }
+    final int resolvedDuration = durationMinutes > 0 ? durationMinutes : _slotDurationMinutes;
+    if (!_isWithinOperationalHours(normalizedTime, resolvedDuration)) {
+      return false;
     }
 
-    return true;
+    return _isSlotAvailable(
+      stylistId: stylistId,
+      date: date,
+      time: normalizedTime,
+      durationMinutes: resolvedDuration,
+      excludedBookingId: excludedBookingId,
+    );
   }
 
   Future<List<BookingModel>> searchBookings(
@@ -258,5 +257,91 @@ class BookingRepository {
     }
 
     return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
+  }
+
+  Future<int> _resolveBookingDurationMinutes(List<String> serviceIds) async {
+    if (serviceIds.isEmpty) {
+      return 0;
+    }
+
+    final ServiceRepository serviceRepository = ServiceRepository();
+    final List<Future<int>> durationRequests = serviceIds.map((serviceId) async {
+      final service = await serviceRepository.getServiceById(serviceId);
+      return service?.durationMinutes ?? 0;
+    }).toList(growable: false);
+
+    final List<int> durations = await Future.wait(durationRequests);
+    return durations.fold<int>(0, (sum, value) => sum + value);
+  }
+
+  bool _isSlotAvailable({
+    required String stylistId,
+    required DateTime date,
+    required String time,
+    required int durationMinutes,
+    String? excludedBookingId,
+  }) {
+    print('DBG: _isSlotAvailable check for $stylistId $time duration=$durationMinutes');
+    final int candidateStart = _timeToMinutes(time);
+    final int candidateEnd = candidateStart + durationMinutes + _turnaroundMinutes;
+
+    for (final booking in _bookings) {
+      print('DBG: checking existing booking ${booking.id} stylist=${booking.stylistId} date=${booking.bookingDate} time=${booking.bookingTime}');
+      if (excludedBookingId != null && booking.id == excludedBookingId) {
+        continue;
+      }
+
+      if (booking.stylistId != stylistId ||
+          !_isSameDate(booking.bookingDate, date) ||
+          booking.status == BookingStatus.cancelled) {
+        continue;
+      }
+
+      final String? existingTime = _normalizeTime(booking.bookingTime);
+      if (existingTime == null) {
+        continue;
+      }
+
+      final int existingDuration = _resolveBookingDurationMinutesSync(booking.serviceIds);
+      final int existingStart = _timeToMinutes(existingTime);
+      final int existingEnd = existingStart + existingDuration + _turnaroundMinutes;
+
+      final bool hasOverlap = candidateStart < existingEnd && candidateEnd > existingStart;
+      if (hasOverlap) {
+        return false;
+      }
+    }
+
+    return true;
+  }
+
+  bool _isWithinOperationalHours(String time, int durationMinutes) {
+    final int start = _timeToMinutes(time);
+    final int end = start + durationMinutes + _turnaroundMinutes;
+    final int operationalStart = _startHour * 60;
+    final int operationalEnd = _endHour * 60;
+
+    return start >= operationalStart && end <= operationalEnd;
+  }
+
+  int _resolveBookingDurationMinutesSync(List<String> serviceIds) {
+    if (serviceIds.isEmpty) {
+      return 0;
+    }
+
+    final Map<String, int> durationById = {
+      for (final service in DummyServices.data) service.id: service.durationMinutes,
+    };
+
+    return serviceIds.fold<int>(0, (sum, serviceId) {
+      return sum + (durationById[serviceId] ?? 0);
+    });
+  }
+
+  int _timeToMinutes(String time) {
+    final List<String> parts = time.split(':');
+    final int hour = int.tryParse(parts.isNotEmpty ? parts[0] : '0') ?? 0;
+    final int minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
+    return hour * 60 + minute;
   }
 }
