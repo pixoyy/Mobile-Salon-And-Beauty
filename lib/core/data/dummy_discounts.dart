@@ -5,6 +5,15 @@ class DummyDiscounts {
 
   static final List<Discount> data = <Discount>[
     Discount(
+      code: 'WEDDING50',
+      title: 'Wedding Season Special',
+      percent: 50,
+      maxAmount: 200000,
+      minSpend: 600000,
+      startDate: DateTime(2026, 5, 1),
+      endDate: DateTime(2026, 5, 31),
+    ),
+    Discount(
       code: 'SAVE20K',
       title: 'Save More on Your Beauty Session',
       percent: 20,

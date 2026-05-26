@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
@@ -33,6 +35,7 @@ class _DiscountSlider extends StatefulWidget {
 
 class _DiscountSliderState extends State<_DiscountSlider> {
   late PageController _controller;
+  Timer? _autoSlideTimer;
 
   double _currentPage = 0;
 
@@ -56,10 +59,11 @@ class _DiscountSliderState extends State<_DiscountSlider> {
   }
 
   void autoSlide() async {
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 4));
-
-      if (!_controller.hasClients) continue;
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_controller.hasClients) {
+        return;
+      }
 
       int nextPage = (_controller.page ?? 0).round() + 1;
 
@@ -72,11 +76,12 @@ class _DiscountSliderState extends State<_DiscountSlider> {
         duration: const Duration(milliseconds: 700),
         curve: Curves.easeInOut,
       );
-    }
+    });
   }
 
   @override
   void dispose() {
+    _autoSlideTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }

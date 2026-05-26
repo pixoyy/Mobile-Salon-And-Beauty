@@ -5,8 +5,9 @@ import '../../service/data/service_repository.dart';
 import '../data/booking_model.dart';
 import '../data/booking_repository.dart';
 import '../data/payment_model.dart';
+import '../domain/booking_availability_service.dart';
+import '../domain/booking_rules_service.dart';
 import '../domain/booking_pricing_service.dart';
-import '../../../core/data/dummy_discounts.dart';
 import '../../../core/models/discount.dart';
 import '../../../core/session/auth_session.dart';
 
@@ -205,7 +206,7 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   Future<void> selectDateTime(DateTime date, String time) async {
-    final String? normalizedTime = _normalizeTime(time);
+    final String? normalizedTime = BookingAvailabilityService.normalizeTime(time);
     if (normalizedTime == null) {
       emit(BookingError(
         message: 'Format jam tidak valid. Gunakan format HH:mm.',
@@ -226,11 +227,12 @@ class BookingCubit extends Cubit<BookingState> {
       return;
     }
 
+    final int selectedDurationMinutes = await _selectedServicesDurationMinutes();
     final bool isAvailable = await _bookingRepository.checkAvailability(
       stylistId,
       _scheduleState.selectedDate!,
       normalizedTime,
-      durationMinutes: await _selectedServicesDurationMinutes(),
+      durationMinutes: selectedDurationMinutes,
     );
 
     if (!isAvailable) {
@@ -238,7 +240,7 @@ class BookingCubit extends Cubit<BookingState> {
         stylistId,
         _scheduleState.selectedDate!,
         normalizedTime,
-        durationMinutes: await _selectedServicesDurationMinutes(),
+        durationMinutes: selectedDurationMinutes,
           ) ??
           'Jam yang dipilih belum tersedia. Silakan pilih jam lain.';
       emit(BookingError(
@@ -294,7 +296,12 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   Future<void> confirmBooking() async {
-    final String? validationMessage = _validateSelection(_scheduleState);
+    final String? validationMessage = BookingRulesService.validateSelection(
+      selectedStylistId: _scheduleState.selectedStylistId,
+      selectedServiceIds: _scheduleState.selectedServiceIds,
+      selectedDate: _scheduleState.selectedDate,
+      selectedTime: _scheduleState.selectedTime,
+    );
     if (validationMessage != null) {
       emit(BookingError(
         message: validationMessage,
@@ -356,30 +363,12 @@ class BookingCubit extends Cubit<BookingState> {
     emit(_scheduleState);
   }
 
-  String? _validateSelection(BookingScheduleState state) {
-    if (state.selectedStylistId == null) {
-      return 'Silakan pilih stylist terlebih dahulu.';
-    }
-    if (state.selectedServiceIds.isEmpty) {
-      return 'Silakan pilih minimal satu layanan.';
-    }
-    if (state.selectedDate == null) {
-      return 'Silakan pilih tanggal booking.';
-    }
-    if (state.selectedTime == null) {
-      return 'Silakan pilih jam booking.';
-    }
-
-    return null;
-  }
-
   Future<PricingResult> _calculatePayment(List<String> serviceIds) async {
     final List<ServiceModel> resolved = await _resolveSelectedServices(serviceIds);
 
     final PricingResult result = await BookingPricingService.calculate(
       resolved,
       bookingDate: _scheduleState.selectedDate,
-      discounts: DummyDiscounts.data,
     );
 
     return result;
@@ -393,7 +382,6 @@ class BookingCubit extends Cubit<BookingState> {
     final PricingResult pricing = await BookingPricingService.calculate(
       selectedServices,
       bookingDate: _scheduleState.selectedDate,
-      discounts: DummyDiscounts.data,
     );
 
     return BookingCheckoutSnapshot(
@@ -413,26 +401,6 @@ class BookingCubit extends Cubit<BookingState> {
     return services.whereType<ServiceModel>().toList(growable: false);
   }
 
-  String? _normalizeTime(String rawTime) {
-    final List<String> parts = rawTime.trim().split(':');
-    if (parts.length != 2) {
-      return null;
-    }
-
-    final int? hour = int.tryParse(parts[0]);
-    final int? minute = int.tryParse(parts[1]);
-
-    if (hour == null || minute == null) {
-      return null;
-    }
-
-    if (hour < 0 || hour > 23 || minute < 0 || minute > 59) {
-      return null;
-    }
-
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')}';
-  }
-
   Future<int> _selectedServicesDurationMinutes() async {
     if (_scheduleState.selectedServiceIds.isEmpty) {
       return 0;
@@ -444,8 +412,6 @@ class BookingCubit extends Cubit<BookingState> {
 
     final List<ServiceModel?> services = await Future.wait(requests);
 
-    return services.whereType<ServiceModel>().fold<int>(0, (sum, service) {
-      return sum + service.durationMinutes;
-    });
+    return BookingRulesService.totalDurationMinutes(services.whereType<ServiceModel>());
   }
 }

@@ -12,8 +12,8 @@ void main() {
 
       // Verify all filter chips are present (as ChoiceChip ancestors)
       expect(find.ancestor(of: find.text('Semua'), matching: find.byType(ChoiceChip)), findsWidgets);
-      expect(find.ancestor(of: find.text('Pending'), matching: find.byType(ChoiceChip)), findsWidgets);
-      expect(find.ancestor(of: find.text('Confirmed'), matching: find.byType(ChoiceChip)), findsWidgets);
+      expect(find.ancestor(of: find.text('Upcoming'), matching: find.byType(ChoiceChip)), findsWidgets);
+      expect(find.ancestor(of: find.text('On Going'), matching: find.byType(ChoiceChip)), findsWidgets);
       expect(find.ancestor(of: find.text('Completed'), matching: find.byType(ChoiceChip)), findsWidgets);
       expect(find.ancestor(of: find.text('Dibatalkan'), matching: find.byType(ChoiceChip)), findsWidgets);
 
@@ -26,12 +26,12 @@ void main() {
       await tester.pumpAndSettle();
 
       // Tap the first ChoiceChip instance that contains the 'Pending' label
-      final Finder pendingChip = find.ancestor(of: find.text('Pending'), matching: find.byType(ChoiceChip)).at(0);
-      await tester.tap(pendingChip);
+      final Finder upcomingChip = find.ancestor(of: find.text('Upcoming'), matching: find.byType(ChoiceChip)).at(0);
+      await tester.tap(upcomingChip);
       await tester.pumpAndSettle();
 
       // Verify chip state changed
-      final ChoiceChip chip = tester.widget<ChoiceChip>(pendingChip);
+      final ChoiceChip chip = tester.widget<ChoiceChip>(upcomingChip);
       expect(chip.selected, isTrue);
     });
 
@@ -79,7 +79,7 @@ void main() {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
       await tester.pumpAndSettle();
 
-      final List<String> filterLabels = ['Semua', 'Pending', 'Confirmed', 'Completed', 'Dibatalkan'];
+      final List<String> filterLabels = ['Semua', 'Upcoming', 'On Going', 'Completed', 'Dibatalkan'];
 
       for (final String label in filterLabels) {
         final Finder chipFinder = find.ancestor(of: find.text(label), matching: find.byType(ChoiceChip)).at(0);

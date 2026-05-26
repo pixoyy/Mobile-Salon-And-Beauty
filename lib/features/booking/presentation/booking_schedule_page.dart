@@ -8,6 +8,7 @@ import '../../service/data/service_repository.dart';
 import '../../stylist/data/stylist_model.dart';
 import '../../stylist/data/stylist_repository.dart';
 import '../bloc/booking_cubit.dart';
+import '../domain/booking_rules_service.dart';
 import 'checkout_page.dart';
 
 class BookingSchedulePage extends StatelessWidget {
@@ -410,80 +411,6 @@ class _BookingScheduleViewState extends State<_BookingScheduleView> {
     );
   }
 
-  // Widget _buildDateTimePicker(
-  //   BuildContext context,
-  //   BookingScheduleState scheduleState,
-  //   bool isLoadingSlots,
-  // ) {
-  //   return Column(
-  //     crossAxisAlignment: CrossAxisAlignment.start,
-  //     children: [
-  //       OutlinedButton.icon(
-  //         onPressed: () => _pickDate(context, scheduleState),
-  //         icon: const Icon(Icons.calendar_month_rounded),
-  //         label: Text(
-  //           scheduleState.selectedDate == null
-  //               ? 'Pilih Tanggal'
-  //               : _formatDateLabel(scheduleState.selectedDate!),
-  //         ),
-  //       ),
-  //       const SizedBox(height: 10),
-  //       if (isLoadingSlots)
-  //         const LinearProgressIndicator(minHeight: 4)
-  //       else if (scheduleState.selectedStylistId == null)
-  //         Text(
-  //           'Pilih stylist untuk melihat slot waktu.',
-  //           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.mutedText),
-  //         )
-  //       else if (scheduleState.selectedDate == null)
-  //         Text(
-  //           'Pilih tanggal untuk memuat slot tersedia.',
-  //           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: AppColors.mutedText),
-  //         )
-  //       else ...[
-  //         Wrap(
-  //           spacing: 8,
-  //           runSpacing: 8,
-  //           children: _allTimeSlots.map((slot) {
-  //             final bool isAvailable = scheduleState.availableSlots.contains(slot);
-  //             final bool isSelected = scheduleState.selectedTime == slot;
-
-  //             return ChoiceChip(
-  //               label: Text(slot),
-  //               selected: isSelected,
-  //               onSelected: isAvailable
-  //                   ? (_) {
-  //                       context.read<BookingCubit>().selectDateTime(
-  //                             scheduleState.selectedDate!,
-  //                             slot,
-  //                           );
-  //                     }
-  //                   : null,
-  //               selectedColor: AppColors.primary.withValues(alpha: 0.2),
-  //               disabledColor: AppColors.border,
-  //               labelStyle: TextStyle(
-  //                 color: isAvailable ? AppColors.text : AppColors.mutedText,
-  //                 fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
-  //               ),
-  //             );
-  //           }).toList(growable: false),
-  //         ),
-  //         if (scheduleState.availableSlots.isEmpty)
-  //           Padding(
-  //             padding: const EdgeInsets.only(top: 8),
-  //             child: Text(
-  //               'Tidak tersedia',
-  //               style: Theme.of(context).textTheme.bodySmall?.copyWith(
-  //                     color: AppColors.error,
-  //                     fontWeight: FontWeight.w700,
-  //                   ),
-  //             ),
-  //           ),
-  //       ],
-  //     ],
-  //   );
-  // }
-
   Widget _buildDateTimePicker(
     BuildContext context,
     BookingScheduleState scheduleState,
@@ -524,79 +451,58 @@ class _BookingScheduleViewState extends State<_BookingScheduleView> {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: _allTimeSlots
-                .map((slot) {
-                  final bool isAvailable = scheduleState.availableSlots
-                      .contains(slot);
+            children: (() {
+              final List<ServiceModel> selectedServices = _services
+                  .where(
+                    (service) => scheduleState.selectedServiceIds.contains(service.id),
+                  )
+                  .toList(growable: false);
+              final int totalDuration = BookingRulesService.totalDurationMinutes(
+                selectedServices,
+              );
+              final List<String> bookingRange = BookingRulesService.highlightedSlots(
+                allSlots: _allTimeSlots,
+                selectedTime: scheduleState.selectedTime,
+                totalDurationMinutes: totalDuration,
+              );
 
-                  final bool isSelected = scheduleState.selectedTime == slot;
+              return _allTimeSlots.map((slot) {
+                final bool isAvailable = scheduleState.availableSlots.contains(slot);
+                final bool isSelected = scheduleState.selectedTime == slot;
+                final bool isInBookingRange = bookingRange.contains(slot);
 
-                  // Total durasi semua service
-                  final int totalDuration = _services
-                      .where(
-                        (service) => scheduleState.selectedServiceIds.contains(
-                          service.id,
-                        ),
-                      )
-                      .fold<int>(
-                        0,
-                        (total, service) => total + service.durationMinutes,
-                      );
+                return ChoiceChip(
+                  label: Text(slot),
 
-                  // Convert durasi ke jumlah slot
-                  // 180 menit = 3 slot
-                  final int totalSlots = (totalDuration / 60).ceil();
+                  selected: isSelected || isInBookingRange,
 
-                  // Cari index jam dipilih
-                  final int selectedIndex = scheduleState.selectedTime != null
-                      ? _allTimeSlots.indexOf(scheduleState.selectedTime!)
-                      : -1;
+                  onSelected: isAvailable
+                      ? (_) {
+                          context.read<BookingCubit>().selectDateTime(
+                            scheduleState.selectedDate!,
+                            slot,
+                          );
+                        }
+                      : null,
 
-                  // Ambil range booking
-                  final List<String> bookingRange = selectedIndex >= 0
-                      ? _allTimeSlots
-                            .skip(selectedIndex)
-                            .take(totalSlots)
-                            .toList()
-                      : [];
+                  backgroundColor: isInBookingRange
+                      ? AppColors.primary.withValues(alpha: 0.18)
+                      : AppColors.surface,
 
-                  // Apakah slot termasuk booking range
-                  final bool isInBookingRange = bookingRange.contains(slot);
+                  selectedColor: AppColors.primary,
 
-                  return ChoiceChip(
-                    label: Text(slot),
+                  disabledColor: AppColors.border,
 
-                    selected: isSelected || isInBookingRange,
-
-                    onSelected: isAvailable
-                        ? (_) {
-                            context.read<BookingCubit>().selectDateTime(
-                              scheduleState.selectedDate!,
-                              slot,
-                            );
-                          }
-                        : null,
-
-                    // WARNA SLOT BOOKING
-                    backgroundColor: isInBookingRange
-                        ? AppColors.primary.withValues(alpha: 0.18)
-                        : AppColors.surface,
-
-                    // WARNA SLOT TERPILIH
-                    selectedColor: AppColors.primary,
-
-                    disabledColor: AppColors.border,
-
-                    labelStyle: TextStyle(
-                      color: !isAvailable
-                          ? Colors.black
-                          : isInBookingRange
-                          ? Colors.black
-                          : AppColors.text,
-                    ),
-                  );
-                })
-                .toList(growable: false),
+                  labelStyle: TextStyle(
+                    color: !isAvailable
+                        ? Colors.black
+                        : isInBookingRange
+                            ? Colors.black
+                            : AppColors.text,
+                  ),
+                );
+              }).toList(growable: false);
+            })(),
           ),
 
           if (scheduleState.availableSlots.isEmpty)
@@ -724,17 +630,13 @@ class _BookingScheduleViewState extends State<_BookingScheduleView> {
     BuildContext context,
     BookingScheduleState state,
   ) {
-    String message = 'Lengkapi data booking terlebih dahulu.';
-
-    if (state.selectedStylistId == null) {
-      message = 'Silakan pilih stylist.';
-    } else if (state.selectedServiceIds.isEmpty) {
-      message = 'Silakan pilih minimal satu layanan.';
-    } else if (state.selectedDate == null) {
-      message = 'Silakan pilih tanggal booking.';
-    } else if (state.selectedTime == null) {
-      message = 'Silakan pilih jam booking.';
-    }
+    final String message = BookingRulesService.validateSelection(
+          selectedStylistId: state.selectedStylistId,
+          selectedServiceIds: state.selectedServiceIds,
+          selectedDate: state.selectedDate,
+          selectedTime: state.selectedTime,
+        ) ??
+        'Lengkapi data booking terlebih dahulu.';
 
     ScaffoldMessenger.of(
       context,

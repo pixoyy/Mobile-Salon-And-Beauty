@@ -99,7 +99,7 @@ void main() {
       'sty-004',
       date,
       '19:00',
-      durationMinutes: 100,
+      durationMinutes: 180,
     );
 
     expect(message, isNotNull);
@@ -144,6 +144,39 @@ void main() {
 
     expect(threePmAvailable, isFalse);
     expect(fourPmAvailable, isTrue);
+  });
+
+  test('existing 16:00 booking blocks 16:00 for a 210 minute service', () async {
+    final BookingRepository repository = BookingRepository();
+    final DateTime date = DateTime(2026, 12, 16);
+
+    await repository.createBooking(
+      BookingModel(
+        id: '',
+        customerId: 'cus-duration-003',
+        stylistId: 'sty-001',
+        serviceIds: <String>['svc-004'],
+        bookingDate: date,
+        bookingTime: '16:00',
+        subtotal: 650000,
+        discount: 0,
+        totalPrice: 650000,
+        status: BookingStatus.upcoming,
+        createdAt: DateTime(2026, 12, 1),
+      ),
+    );
+
+    final List<String> slots = await repository.getAvailableSlotsForStylist(
+      'sty-001',
+      date,
+      durationMinutes: 210,
+    );
+
+    expect(slots, isNot(contains('16:00')));
+    expect(slots, isNot(contains('17:00')));
+    expect(slots, isNot(contains('18:00')));
+    expect(slots, isNot(contains('19:00')));
+    expect(slots, isNot(contains('20:00')));
   });
 
   test('booking repository scopes new bookings to the active session customer', () async {

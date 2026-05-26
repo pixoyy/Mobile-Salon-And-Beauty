@@ -35,9 +35,9 @@ void main() {
     final BookingCheckoutSnapshot snapshot = await bookingCubit.buildCheckoutSnapshot();
 
     expect(snapshot.payment.subtotal, 625000);
-    expect(snapshot.payment.discountAmount, 50000);
-    expect(snapshot.payment.totalPrice, 575000);
-    expect(snapshot.discountLabel, contains('GLAMORA20'));
+    expect(snapshot.payment.discountAmount, 200000);
+    expect(snapshot.payment.totalPrice, 425000);
+    expect(snapshot.discountLabel, contains('WEDDING50'));
   });
 
   test('confirmBooking stores the final pricing snapshot', () async {
@@ -61,8 +61,8 @@ void main() {
 
     final BookingModel latest = bookings.first;
     expect(latest.subtotal, 625000);
-    expect(latest.discount, 50000);
-    expect(latest.totalPrice, 575000);
+    expect(latest.discount, 200000);
+    expect(latest.totalPrice, 425000);
   });
 
 }

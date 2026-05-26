@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salon_and_beauty/core/theme/app_colors.dart';
-import 'package:salon_and_beauty/features/user/bloc/user_bloc.dart';
+import 'package:salon_and_beauty/features/user/bloc/user_cubit.dart';
 
 class ChangePasswordPage extends StatefulWidget {
   const ChangePasswordPage({super.key});
@@ -118,11 +118,9 @@ class _ChangePasswordPageState
       return;
     }
 
-    context.read<UserBloc>().add(
-          ChangePasswordEvent(
-            oldPassword: oldPassword,
-            newPassword: newPassword,
-          ),
+    context.read<UserCubit>().changePassword(
+          oldPassword: oldPassword,
+          newPassword: newPassword,
         );
   }
 
@@ -130,7 +128,7 @@ class _ChangePasswordPageState
   Widget build(BuildContext context) {
     final strength = _passwordStrength;
 
-    return BlocListener<UserBloc, UserState>(
+    return BlocListener<UserCubit, UserState>(
       listener: (context, state) async {
         if (state is ChangePasswordLoading) {
           showDialog(
