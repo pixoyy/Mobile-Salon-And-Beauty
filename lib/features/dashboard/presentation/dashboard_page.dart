@@ -2,6 +2,9 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/stylist/data/dummy_stylists.dart';
+import 'package:salon_and_beauty/features/stylist/data/stylist_model.dart';
+import 'package:salon_and_beauty/features/stylist/presentation/stylist_detail_page.dart';
 
 import '../../../core/data/discount_repository.dart';
 import '../../../core/data/dummy_discounts.dart';
@@ -431,20 +434,20 @@ class _DashboardView extends StatelessWidget {
                     ],
                   ),
 
-                  Container(
-                    height: 48,
-                    width: 48,
+                  // Container(
+                  //   height: 48,
+                  //   width: 48,
 
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
+                  //   decoration: BoxDecoration(
+                  //     color: AppColors.surface,
 
-                      borderRadius: BorderRadius.circular(16),
+                  //     borderRadius: BorderRadius.circular(16),
 
-                      border: Border.all(color: AppColors.border),
-                    ),
+                  //     border: Border.all(color: AppColors.border),
+                  //   ),
 
-                    child: const Icon(Icons.notifications_none_rounded),
-                  ),
+                  //   // child: const Icon(Icons.notifications_none_rounded),
+                  // ),
                 ],
               ),
 
@@ -457,7 +460,7 @@ class _DashboardView extends StatelessWidget {
 
               /// QUICK ACTION
               Text(
-                'Menu Cepat',
+                'Recommend Stylist',
 
                 style: Theme.of(
                   context,
@@ -466,7 +469,7 @@ class _DashboardView extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              _QuickActionGrid(actions: snapshot?.quickActions ?? const []),
+              _StylistList(stylists: DummyStylists.data),
 
               const SizedBox(height: 26),
 
@@ -491,86 +494,235 @@ class _DashboardView extends StatelessWidget {
 }
 
 /// ======================================================
-/// QUICK GRID
+/// QUICK STYLIST CAROUSEL
 /// ======================================================
-class _QuickActionGrid extends StatelessWidget {
-  const _QuickActionGrid({required this.actions});
+class _StylistList extends StatefulWidget {
+  const _StylistList({required this.stylists});
 
-  final List<dynamic> actions;
+  final List<StylistModel> stylists;
+
+  @override
+  State<_StylistList> createState() => _StylistListState();
+}
+
+class _StylistListState extends State<_StylistList> {
+  late final PageController _controller;
+  Timer? _autoSlideTimer;
+  double _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = PageController(viewportFraction: 0.88);
+    _controller.addListener(() {
+      if (!_controller.hasClients) return;
+
+      setState(() {
+        _currentPage = _controller.page ?? 0;
+      });
+    });
+
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_controller.hasClients || widget.stylists.isEmpty) {
+        return;
+      }
+
+      var nextPage = (_controller.page ?? 0).round() + 1;
+      if (nextPage >= widget.stylists.length) {
+        nextPage = 0;
+      }
+
+      _controller.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoSlideTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _getScale(int index) {
+    final scale = 1 - ((_currentPage - index).abs() * 0.06);
+    return scale.clamp(0.94, 1.0);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (actions.isEmpty) {
-      return const SizedBox();
+    if (widget.stylists.isEmpty) {
+      return const SizedBox.shrink();
     }
 
-    final icons = [
-      Icons.content_cut_rounded,
-      Icons.spa_rounded,
-      Icons.face_retouching_natural_rounded,
-      Icons.calendar_month_rounded,
-    ];
+    return SizedBox(
+      height: 280,
+      child: PageView.builder(
+        controller: _controller,
+        scrollDirection: Axis.vertical,
+        itemCount: widget.stylists.length,
+        itemBuilder: (context, index) {
+          final stylist = widget.stylists[index];
 
-    return GridView.builder(
-      itemCount: actions.length,
-
-      shrinkWrap: true,
-
-      physics: const NeverScrollableScrollPhysics(),
-
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: 0.82,
+          return Transform.scale(
+            scale: _getScale(index),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _StylistSlideCard(stylist: stylist),
+            ),
+          );
+        },
       ),
+    );
+  }
+}
 
-      itemBuilder: (context, index) {
-        final action = actions[index];
+class _StylistSlideCard extends StatelessWidget {
+  const _StylistSlideCard({required this.stylist});
 
-        return Column(
-          children: [
-            Container(
-              height: 72,
-              width: 72,
+  final StylistModel stylist;
 
-              decoration: BoxDecoration(
-                color: AppColors.surface,
+  @override
+  Widget build(BuildContext context) {
+    final rating = stylist.rating;
 
-                borderRadius: BorderRadius.circular(22),
-
-                border: Border.all(color: AppColors.border),
-
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-
-                    blurRadius: 10,
-                    offset: const Offset(0, 6),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => StylistDetailPage(stylistId: stylist.id),
+            ),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFDF7F3), Color(0xFFFFFFFF)],
+            ),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 16,
+                offset: const Offset(0, 8),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(14),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Image.network(
+                    stylist.photoUrl,
+                    width: 92,
+                    height: double.infinity,
+                    fit: BoxFit.cover,
                   ),
-                ],
-              ),
-
-              child: Icon(
-                icons[index % icons.length],
-
-                color: AppColors.primary,
-                size: 32,
-              ),
+                ),
+                const SizedBox(width: 14),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 5,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          'Recommended',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Text(
+                        stylist.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 17,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        stylist.specialization,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 12,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                            size: 18,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '(${stylist.reviewCount} ulasan)',
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 10),
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 14,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
-
-            const SizedBox(height: 10),
-
-            Text(
-              action.title ?? '',
-
-              textAlign: TextAlign.center,
-
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
-            ),
-          ],
-        );
-      },
+          ),
+        ),
+      ),
     );
   }
 }
