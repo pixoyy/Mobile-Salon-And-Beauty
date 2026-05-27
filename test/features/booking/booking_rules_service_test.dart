@@ -1,8 +1,12 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../test_helper.dart';
 import 'package:salon_and_beauty/features/booking/domain/booking_rules_service.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   test('highlighted slots start after the selected slot', () {
     const List<String> allSlots = <String>[
       '08:00',

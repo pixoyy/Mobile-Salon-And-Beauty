@@ -9,6 +9,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'test_helper.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/app.dart';
 import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
@@ -19,6 +20,9 @@ import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
 import 'package:salon_and_beauty/features/user/data/user_model.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   testWidgets('shows Glamora login screen', (WidgetTester tester) async {
     await tester.pumpWidget(const GlamoraApp());
 

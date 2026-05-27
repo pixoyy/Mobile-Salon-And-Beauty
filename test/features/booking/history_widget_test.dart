@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../test_helper.dart';
 
 import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
@@ -55,6 +56,9 @@ Future<void> _setAllBookingsToCompleted(BookingRepository repository) async {
 }
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   group('HistoryPage widget tests', () {
     testWidgets('filter status menampilkan hasil sesuai status', (WidgetTester tester) async {
       final BookingRepository repository = BookingRepository();

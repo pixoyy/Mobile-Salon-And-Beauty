@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import '../../test_helper.dart';
+import '../../test_utils.dart';
 
 import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
@@ -18,6 +20,9 @@ String _formatDateLabel(DateTime date) {
 }
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   testWidgets('BookingSchedulePage loads with form fields', (tester) async {
     await tester.pumpWidget(
       MultiRepositoryProvider(
@@ -45,12 +50,7 @@ void main() {
     );
 
     // Wait for master data to load and the checkout button to appear
-    for (int i = 0; i < 20; i++) {
-      await tester.pump(const Duration(milliseconds: 100));
-      if (find.byType(ElevatedButton).evaluate().isNotEmpty) {
-        break;
-      }
-    }
+    await waitForAppReady(tester);
 
     // Page title and main sections are visible
     expect(find.text('Booking Schedule'), findsOneWidget);
@@ -86,14 +86,14 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await waitForAppReady(tester);
 
     // Initially shows "Belum ada stylist dipilih"
     expect(find.text('Belum ada stylist dipilih'), findsOneWidget);
 
     final bookingCubit = tester.element(find.byType(BookingSchedulePage)).read<BookingCubit>();
     await bookingCubit.selectStylist('sty-001');
-    await tester.pumpAndSettle();
+    await waitForAppReady(tester);
 
     // Stylist name should appear in the picker
     expect(find.textContaining('Nadia Putri'), findsWidgets);
@@ -125,7 +125,7 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle();
+    await waitForAppReady(tester);
 
     // Initially shows "Belum ada layanan dipilih"
     expect(find.text('Belum ada layanan dipilih'), findsOneWidget);
@@ -133,7 +133,7 @@ void main() {
     final bookingCubit = tester.element(find.byType(BookingSchedulePage)).read<BookingCubit>();
     final firstService = DummyServices.data.first;
     bookingCubit.selectServices(<String>[firstService.id]);
-    await tester.pumpAndSettle();
+    await waitForAppReady(tester);
 
     // Service chip should appear (selected services are shown as chips)
     final chips = find.byType(Chip);
@@ -299,7 +299,7 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await waitForAppReady(tester);
 
     final bookingCubit = tester.element(find.byType(BookingSchedulePage)).read<BookingCubit>();
     final DateTime today = DateTime.now();

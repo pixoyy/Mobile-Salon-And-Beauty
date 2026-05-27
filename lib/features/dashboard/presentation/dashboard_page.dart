@@ -3,7 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import '../../../core/data/discount_repository.dart';
 import '../../../core/data/dummy_discounts.dart';
+import '../../../core/models/discount.dart';
 import '../../../core/theme/app_colors.dart';
 
 import '../bloc/dashboard_cubit.dart';
@@ -39,7 +41,7 @@ class _DiscountSliderState extends State<_DiscountSlider> {
 
   double _currentPage = 0;
 
-  final List discounts = DummyDiscounts.data;
+  List<Discount> _discounts = List<Discount>.from(DummyDiscounts.data);
 
   @override
   void initState() {
@@ -55,7 +57,19 @@ class _DiscountSliderState extends State<_DiscountSlider> {
       });
     });
 
+    _loadDiscounts();
     autoSlide();
+  }
+
+  Future<void> _loadDiscounts() async {
+    final loaded = await DiscountRepository().getAllDiscounts();
+    if (!mounted || loaded.isEmpty) {
+      return;
+    }
+
+    setState(() {
+      _discounts = List<Discount>.from(loaded);
+    });
   }
 
   void autoSlide() async {
@@ -67,7 +81,7 @@ class _DiscountSliderState extends State<_DiscountSlider> {
 
       int nextPage = (_controller.page ?? 0).round() + 1;
 
-      if (nextPage >= discounts.length) {
+      if (nextPage >= _discounts.length) {
         nextPage = 0;
       }
 
@@ -101,10 +115,10 @@ class _DiscountSliderState extends State<_DiscountSlider> {
 
           child: PageView.builder(
             controller: _controller,
-            itemCount: discounts.length,
+            itemCount: _discounts.length,
 
             itemBuilder: (context, index) {
-              final d = discounts[index];
+              final d = _discounts[index];
 
               final scale = _getScale(index);
 
@@ -319,7 +333,7 @@ class _DiscountSliderState extends State<_DiscountSlider> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
 
-          children: List.generate(discounts.length, (index) {
+          children: List.generate(_discounts.length, (index) {
             final isActive = index == _currentPage.round();
 
             return AnimatedContainer(

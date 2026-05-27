@@ -211,12 +211,7 @@ class BookingAvailabilityService {
     });
   }
 
-  static int _timeToMinutes(String time) {
-    final List<String> parts = time.split(':');
-    final int hour = int.tryParse(parts.isNotEmpty ? parts[0] : '0') ?? 0;
-    final int minute = int.tryParse(parts.length > 1 ? parts[1] : '0') ?? 0;
-    return hour * 60 + minute;
-  }
+
 
   static int _requiredSlotCount(int durationMinutes) {
     if (durationMinutes <= 0) {

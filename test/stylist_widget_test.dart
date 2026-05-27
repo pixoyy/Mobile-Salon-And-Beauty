@@ -1,12 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'test_helper.dart';
+import 'test_utils.dart';
 
 import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
 import 'package:salon_and_beauty/features/stylist/presentation/stylist_list_page.dart';
 import 'package:salon_and_beauty/features/stylist/presentation/stylist_detail_page.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   testWidgets('Stylist list shows items and navigates to detail', (tester) async {
     await tester.pumpWidget(
       RepositoryProvider<StylistRepository>(
@@ -15,7 +20,7 @@ void main() {
       ),
     );
 
-    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await waitForFinder(tester, find.text('Pilih Stylist'));
 
     // Page title
     expect(find.text('Pilih Stylist'), findsOneWidget);
@@ -27,7 +32,7 @@ void main() {
     final detailButton = find.text('Lihat Detail').first;
     expect(detailButton, findsWidgets);
     await tester.tap(detailButton);
-    await tester.pumpAndSettle(const Duration(seconds: 1));
+    await waitForFinder(tester, find.text('Pilih Stylist'));
 
     // Detail page shows
     expect(find.text('Detail Stylist'), findsOneWidget);
@@ -46,7 +51,7 @@ void main() {
 
     // Enter a search query
     await tester.enterText(find.byType(TextField).first, 'Nadia');
-    await tester.pumpAndSettle();
+    await waitForFinder(tester, find.textContaining('Nadia Putri'));
 
     expect(find.text('Nadia Putri'), findsOneWidget);
     expect(find.text('Rizky Ananda'), findsNothing);

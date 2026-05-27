@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../test_helper.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
@@ -25,6 +26,9 @@ Future<BookingCubit> _buildPreparedCubit() async {
 }
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   UserModel? previousUser;
 
   setUp(() {
