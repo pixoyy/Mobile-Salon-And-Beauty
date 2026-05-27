@@ -1,0 +1,28 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "generate-app-icons",
+			"type": "shell",
+			"command": "d:/Learn Coding/Dart/salon_and_beauty/.venv/Scripts/python.exe",
+			"args": [
+				"-c",
+				"from pathlib import Path; from PIL import Image; root=Path(r'd:/Learn Coding/Dart/salon_and_beauty'); source=root/'web/icons/logo.png'; img=Image.open(source).convert('RGBA'); sizes={root/'web/favicon.png':32,root/'web/icons/Icon-192.png':192,root/'web/icons/Icon-512.png':512,root/'web/icons/Icon-maskable-192.png':192,root/'web/icons/Icon-maskable-512.png':512,root/'android/app/src/main/res/mipmap-mdpi/ic_launcher.png':48,root/'android/app/src/main/res/mipmap-hdpi/ic_launcher.png':72,root/'android/app/src/main/res/mipmap-xhdpi/ic_launcher.png':96,root/'android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png':144,root/'android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png':192,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_16.png':16,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_32.png':32,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_64.png':64,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_128.png':128,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_256.png':256,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_512.png':512,root/'macos/Runner/Assets.xcassets/AppIcon.appiconset/app_icon_1024.png':1024,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@1x.png':20,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@2x.png':40,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-20x20@3x.png':60,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@1x.png':29,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@2x.png':58,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-29x29@3x.png':87,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@1x.png':40,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@2x.png':80,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-40x40@3x.png':120,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@2x.png':120,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-60x60@3x.png':180,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@1x.png':76,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-76x76@2x.png':152,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-83.5x83.5@2x.png':167,root/'ios/Runner/Assets.xcassets/AppIcon.appiconset/Icon-App-1024x1024@1x.png':1024};\nfor path, size in sizes.items():\n    path.parent.mkdir(parents=True, exist_ok=True)\n    resized=img.resize((size, size), Image.Resampling.LANCZOS)\n    resized.save(path, format='PNG', optimize=True)\n    print(f'WROTE {path} {size}x{size}')"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		},
+		{
+			"label": "generate-app-icons",
+			"type": "shell",
+			"command": "d:/Learn Coding/Dart/salon_and_beauty/.venv/Scripts/python.exe",
+			"args": [
+				"d:/Learn Coding/Dart/salon_and_beauty/.tmp_generate_icons.py"
+			],
+			"isBackground": false,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
