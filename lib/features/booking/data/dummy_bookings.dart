@@ -4,7 +4,7 @@ class DummyBookings {
   static final List<BookingModel> upcoming = [
     BookingModel(
       id: 'bk-001',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-001',
       serviceIds: const ['svc-001', 'svc-005'],
       bookingDate: DateTime(2026, 5, 25),
@@ -12,13 +12,13 @@ class DummyBookings {
       subtotal: 270000,
       discount: 20000,
       totalPrice: 250000,
-      status: BookingStatus.pending,
+      status: BookingStatus.upcoming,
       notes: 'Ingin style natural untuk acara kantor.',
       createdAt: DateTime(2026, 5, 18, 20, 30),
     ),
     BookingModel(
       id: 'bk-002',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-003',
       serviceIds: const ['svc-006'],
       bookingDate: DateTime(2026, 5, 29),
@@ -26,7 +26,7 @@ class DummyBookings {
       subtotal: 390000,
       discount: 0,
       totalPrice: 390000,
-      status: BookingStatus.confirmed,
+      status: BookingStatus.onGoing,
       createdAt: DateTime(2026, 5, 19, 9, 45),
     ),
   ];
@@ -34,7 +34,7 @@ class DummyBookings {
   static final List<BookingModel> history = [
     BookingModel(
       id: 'bk-003',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-002',
       serviceIds: const ['svc-002'],
       bookingDate: DateTime(2026, 5, 2),
@@ -47,7 +47,7 @@ class DummyBookings {
     ),
     BookingModel(
       id: 'bk-004',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-004',
       serviceIds: const ['svc-004'],
       bookingDate: DateTime(2026, 4, 14),
@@ -60,7 +60,7 @@ class DummyBookings {
     ),
     BookingModel(
       id: 'bk-005',
-      customerId: 'demo-001',
+      customerId: 'cus-001',
       stylistId: 'sty-005',
       serviceIds: const ['svc-001'],
       bookingDate: DateTime(2026, 3, 20),

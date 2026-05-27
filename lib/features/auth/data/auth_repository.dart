@@ -88,6 +88,10 @@
 //       'Demo: siska.amanda@example.com / password123 atau daftar akun baru';
 // }
 
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:salon_and_beauty/core/data/database_helper.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/features/user/data/dummy_user.dart';
 import 'package:salon_and_beauty/features/user/data/user_model.dart';
@@ -117,44 +121,55 @@ class AuthRepository {
   }
 
   /// LOGIN
-  UserModel? validateLogin({
+  Future<UserModel?> validateLogin({
     required String identifier,
     required String password,
-  }) {
+  }) async {
     if (
         identifier.trim().isEmpty ||
         password.trim().length < 6) {
       return null;
     }
 
+    // First try DB
     try {
-
-      /// CARI USER
-      final user = _registeredUsers.firstWhere(
-        (u) =>
-            (u.email == identifier ||
-                u.name == identifier) &&
-            u.password == password,
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        'users',
+        where: '(email = ? OR name = ?) AND password = ?',
+        whereArgs: [identifier, identifier, password],
       );
 
-      /// SIMPAN SESSION
-      AuthSession.currentUser = user;
+      if (rows.isNotEmpty) {
+        final user = UserModel.fromMap(rows.first);
+        // persist session
+        await AuthSession.persistLogin(user);
+        return user;
+      }
+    } catch (error, stackTrace) {
+      debugPrint('AuthRepository.validateLogin DB error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      // ignore DB errors and fallback to memory
+    }
 
+    try {
+      final user = _registeredUsers.firstWhere(
+        (u) => (u.email == identifier || u.name == identifier) && u.password == password,
+      );
+      await AuthSession.persistLogin(user);
       return user;
-
     } catch (e) {
-
       return null;
     }
   }
 
   /// REGISTER
-  RegisterResult register({
+  Future<RegisterResult> register({
     required String name,
     required String email,
     required String password,
     required String phone,
-  }) {
+  }) async {
 
     if (name.trim().isEmpty) {
       return RegisterResult.failure(
@@ -201,15 +216,23 @@ class AuthRepository {
     }
 
     final newUser = UserModel(
-      id:
-          'user_${DateTime.now().millisecondsSinceEpoch}',
+      id: 'user_${DateTime.now().millisecondsSinceEpoch}',
       name: name,
       email: email,
       phone: phone,
       password: password,
     );
 
-    _registeredUsers.add(newUser);
+    // try persist to DB
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.insert('users', newUser.toMap());
+    } catch (error, stackTrace) {
+      debugPrint('AuthRepository.register DB error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+      // fallback to memory
+      _registeredUsers.add(newUser);
+    }
 
     return RegisterResult.success();
   }
@@ -219,29 +242,62 @@ class AuthRepository {
 
     /// UPDATE SESSION
     AuthSession.currentUser = updatedUser;
+    // persist user id
+    AuthSession.persistLogin(updatedUser);
 
     /// UPDATE LIST USER
-    final index = _registeredUsers.indexWhere(
-      (u) => u.id == updatedUser.id,
-    );
+    final index = _registeredUsers.indexWhere((u) => u.id == updatedUser.id);
+
+    // update DB record as well
+    unawaited(_updateUserToDb(updatedUser));
 
     if (index != -1) {
       _registeredUsers[index] = updatedUser;
     }
   }
 
+  Future<void> _updateUserToDb(UserModel user) async {
+    try {
+      final db = await DatabaseHelper.instance.database;
+      await db.update('users', user.toMap(), where: 'id = ?', whereArgs: [user.id]);
+    } catch (error, stackTrace) {
+      debugPrint('AuthRepository._updateUserToDb DB error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+  }
+
   /// UPDATE PASSWORD
-  bool changePassword({
+  Future<bool> changePassword({
     required String oldPassword,
     required String newPassword,
-  }) {
+  }) async {
 
-    final currentUser =
-        AuthSession.currentUser;
+    final sessionUser = AuthSession.currentUser;
 
-    if (currentUser == null) {
+    if (sessionUser == null) {
       return false;
     }
+
+    UserModel currentUser = sessionUser;
+
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final rows = await db.query(
+        'users',
+        where: 'id = ?',
+        whereArgs: [sessionUser.id],
+        limit: 1,
+      );
+
+      if (rows.isNotEmpty) {
+        currentUser = UserModel.fromMap(rows.first);
+      }
+    } catch (error, stackTrace) {
+      debugPrint('AuthRepository.changePassword read DB error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+
+    await AuthSession.persistLogin(currentUser);
 
     /// VALIDASI PASSWORD LAMA
     if (currentUser.password != oldPassword) {
@@ -249,13 +305,36 @@ class AuthRepository {
     }
 
     /// UPDATE PASSWORD
-    final updatedUser =
-        currentUser.copyWith(
-      password: newPassword,
-    );
+    final updatedUser = currentUser.copyWith(password: newPassword);
 
-    /// UPDATE DATA
-    updateCurrentUser(updatedUser);
+    // update DB if possible
+    try {
+      final db = await DatabaseHelper.instance.database;
+      final updated = await db.update(
+        'users',
+        updatedUser.toMap(),
+        where: 'id = ?',
+        whereArgs: [updatedUser.id],
+      );
+
+      if (updated > 0) {
+        // DB already updated; continue syncing local state below.
+      }
+    } catch (error, stackTrace) {
+      debugPrint('AuthRepository.changePassword DB error: $error');
+      debugPrintStack(stackTrace: stackTrace);
+    }
+
+    // Keep local session and in-memory cache in sync even when the DB row is
+    // missing or the device is running against a memory-only account.
+    await AuthSession.persistLogin(updatedUser);
+
+    final index = _registeredUsers.indexWhere((u) => u.id == updatedUser.id);
+    if (index != -1) {
+      _registeredUsers[index] = updatedUser;
+    } else {
+      _registeredUsers.add(updatedUser);
+    }
 
     return true;
   }

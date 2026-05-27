@@ -9,14 +9,20 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'test_helper.dart';
+import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/app.dart';
 import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
 import 'package:salon_and_beauty/features/service/data/service_repository.dart';
 import 'package:salon_and_beauty/features/shell/presentation/app_shell.dart';
 import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
+import 'package:salon_and_beauty/features/user/data/user_model.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   testWidgets('shows Glamora login screen', (WidgetTester tester) async {
     await tester.pumpWidget(const GlamoraApp());
 
@@ -41,28 +47,38 @@ void main() {
   });
 
   testWidgets('app shell navigation tabs work', (WidgetTester tester) async {
+    final UserModel? previousUser = AuthSession.currentUser;
+    AuthSession.currentUser = const UserModel(
+      id: 'cus-widget-test',
+      name: 'Widget Test User',
+      email: 'widget@example.com',
+      phone: '081200000012',
+      password: 'password123',
+    );
+
     final ServiceRepository serviceRepository = ServiceRepository();
 
-    await tester.pumpWidget(
-      RepositoryProvider<StylistRepository>(
-        create: (_) => StylistRepository(),
-        child: RepositoryProvider<ServiceRepository>(
-          create: (_) => serviceRepository,
-          child: RepositoryProvider<BookingRepository>(
-            create: (_) => BookingRepository(),
-            child: BlocProvider<BookingCubit>(
-              create: (context) => BookingCubit(
-                context.read<BookingRepository>(),
-                serviceRepository,
+    try {
+      await tester.pumpWidget(
+        RepositoryProvider<StylistRepository>(
+          create: (_) => StylistRepository(),
+          child: RepositoryProvider<ServiceRepository>(
+            create: (_) => serviceRepository,
+            child: RepositoryProvider<BookingRepository>(
+              create: (_) => BookingRepository(),
+              child: BlocProvider<BookingCubit>(
+                create: (context) => BookingCubit(
+                  context.read<BookingRepository>(),
+                  serviceRepository,
+                ),
+                child: const MaterialApp(home: AppShell()),
               ),
-              child: const MaterialApp(home: AppShell()),
             ),
           ),
         ),
-      ),
-    );
+      );
 
-    await tester.pumpAndSettle(const Duration(seconds: 1));
+      await tester.pumpAndSettle(const Duration(seconds: 1));
 
     expect(find.text('Beranda'), findsWidgets);
 
@@ -77,12 +93,17 @@ void main() {
 
     await tester.tap(find.text('Booking').last);
     await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.text('Booking Schedule'), findsOneWidget);
-    expect(find.text('1. Pilih Stylist'), findsOneWidget);
+    expect(find.text('Booking'), findsWidgets);
+    expect(find.text('Belum ada riwayat booking'), findsOneWidget);
+    expect(find.text('Semua'), findsOneWidget);
 
-    await tester.tap(find.text('Akun').last);
-    await tester.pumpAndSettle(const Duration(seconds: 1));
-    expect(find.text('Akun'), findsWidgets);
-    expect(find.text('Phase berikutnya akan memuat profil dan pengaturan akun.'), findsOneWidget);
+      await tester.tap(find.text('Akun').last);
+      await tester.pumpAndSettle(const Duration(seconds: 1));
+      expect(find.text('Akun'), findsWidgets);
+      expect(find.text('Edit Profile'), findsOneWidget);
+      expect(find.text('Keamanan Akun'), findsOneWidget);
+    } finally {
+      AuthSession.currentUser = previousUser;
+    }
   });
 }

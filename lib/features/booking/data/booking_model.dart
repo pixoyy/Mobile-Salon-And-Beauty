@@ -1,12 +1,12 @@
-enum BookingStatus { pending, confirmed, completed, cancelled }
+enum BookingStatus { upcoming, onGoing, completed, cancelled }
 
 extension BookingStatusX on BookingStatus {
   String get value {
     switch (this) {
-      case BookingStatus.pending:
-        return 'pending';
-      case BookingStatus.confirmed:
-        return 'confirmed';
+      case BookingStatus.upcoming:
+        return 'upcoming';
+      case BookingStatus.onGoing:
+        return 'on_going';
       case BookingStatus.completed:
         return 'completed';
       case BookingStatus.cancelled:
@@ -16,15 +16,16 @@ extension BookingStatusX on BookingStatus {
 
   static BookingStatus fromValue(String value) {
     switch (value.toLowerCase()) {
-      case 'confirmed':
-        return BookingStatus.confirmed;
+      case 'on_going':
+      case 'ongoing':
+        return BookingStatus.onGoing;
       case 'completed':
         return BookingStatus.completed;
       case 'cancelled':
         return BookingStatus.cancelled;
-      case 'pending':
+      case 'upcoming':
       default:
-        return BookingStatus.pending;
+        return BookingStatus.upcoming;
     }
   }
 }
@@ -155,7 +156,7 @@ class BookingModel {
       discount: _toInt(json['discount']) ?? 0,
       totalPrice: _toInt(json['totalPrice']),
       status: BookingStatusX.fromValue(
-        json['status']?.toString() ?? BookingStatus.pending.value,
+        json['status']?.toString() ?? BookingStatus.upcoming.value,
       ),
       createdAt: _tryParseDateTime(json['createdAt']?.toString()) ??
           parsedDateTime ??

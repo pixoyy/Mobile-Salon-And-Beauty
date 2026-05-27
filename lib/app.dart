@@ -1,39 +1,64 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_bloc/flutter_bloc.dart';
 
+import 'bootstrap/app_bootstrap.dart';
+import 'core/session/auth_session.dart';
 import 'core/theme/app_theme.dart';
 import 'features/auth/presentation/login_page.dart';
-import 'features/booking/bloc/booking_cubit.dart';
-import 'features/booking/data/booking_repository.dart';
-import 'features/service/data/service_repository.dart';
-import 'features/stylist/data/stylist_repository.dart';
+import 'features/shell/presentation/app_shell.dart';
 
-class GlamoraApp extends StatelessWidget {
+class GlamoraApp extends StatefulWidget {
   const GlamoraApp({super.key});
 
   @override
+  State<GlamoraApp> createState() => _GlamoraAppState();
+}
+
+class _GlamoraAppState extends State<GlamoraApp> {
+  late final Future<void> _bootstrapFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bootstrapFuture = AuthSession.bootstrap();
+  }
+
+  @override
   Widget build(BuildContext context) {
-    return MultiRepositoryProvider(
-      providers: [
-        RepositoryProvider<StylistRepository>(create: (_) => StylistRepository()),
-        RepositoryProvider<ServiceRepository>(create: (_) => ServiceRepository()),
-        RepositoryProvider<BookingRepository>(create: (_) => BookingRepository()),
-      ],
-      child: MultiBlocProvider(
-        providers: [
-          BlocProvider<BookingCubit>(
-            create: (context) => BookingCubit(
-              context.read<BookingRepository>(),
-              context.read<ServiceRepository>(),
-            ),
-          ),
-        ],
-        child: MaterialApp(
-          title: 'Glamora Salon & Beauty',
-          debugShowCheckedModeBanner: false,
-          theme: buildAppTheme(),
-          home: const LoginPage(),
-        ),
+    return AppBootstrap(
+      child: FutureBuilder<void>(
+        future: _bootstrapFuture,
+        builder: (context, snapshot) {
+          final bool isReady = snapshot.connectionState == ConnectionState.done;
+
+          if (!isReady) {
+            return MaterialApp(
+              title: 'Glamora Salon & Beauty',
+              debugShowCheckedModeBanner: false,
+              theme: buildAppTheme(),
+              home: const _StartupScreen(),
+            );
+          }
+
+          return MaterialApp(
+            title: 'Glamora Salon & Beauty',
+            debugShowCheckedModeBanner: false,
+            theme: buildAppTheme(),
+            home: AuthSession.isLoggedIn ? const AppShell() : const LoginPage(),
+          );
+        },
+      ),
+    );
+  }
+}
+
+class _StartupScreen extends StatelessWidget {
+  const _StartupScreen();
+
+  @override
+  Widget build(BuildContext context) {
+    return const Scaffold(
+      body: Center(
+        child: CircularProgressIndicator(),
       ),
     );
   }

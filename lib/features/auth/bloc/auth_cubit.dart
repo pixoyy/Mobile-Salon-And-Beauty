@@ -119,14 +119,14 @@ class AuthCubit extends Cubit<AuthState> {
 
     await Future<void>.delayed(const Duration(milliseconds: 450));
 
-    final user = _repository.validateLogin(
+    final user = await _repository.validateLogin(
       identifier: identifier,
       password: password,
     );
 
     if (user != null) {
 
-      // SAVE SESSION
+      // SAVE SESSION (persisted by repository)
       AuthSession.currentUser = user;
 
       emit(

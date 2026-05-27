@@ -8,16 +8,24 @@ import '../../stylist/presentation/stylist_list_page.dart';
 // import '../../booking/presentation/history_page.dart';
 
 class AppShell extends StatefulWidget {
-  const AppShell({super.key});
+  const AppShell({super.key, this.initialIndex = 0});
+
+  final int initialIndex;
 
   @override
   State<AppShell> createState() => _AppShellState();
 }
 
 class _AppShellState extends State<AppShell> {
-  int _currentIndex = 0;
-  // int _bookingTabVersion = 0;
+  late int _currentIndex;
+  int _bookingTabVersion = 0;
   // int _historyTabVersion = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    _currentIndex = widget.initialIndex;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -25,7 +33,7 @@ class _AppShellState extends State<AppShell> {
       const DashboardPage(),
       const StylistListPage(),
       const ServiceListPage(),
-      const BookingMenuPage(),
+      BookingMenuPage(key: ValueKey<int>(_bookingTabVersion)),
       const UserMenuPage(),
       // BookingMenuPage(key: ValueKey<int>(_bookingTabVersion)),
       // HistoryPage(key: ValueKey<int>(_historyTabVersion)),
@@ -41,6 +49,9 @@ class _AppShellState extends State<AppShell> {
         onDestinationSelected: (index) {
           setState(() {
             _currentIndex = index;
+            if (index == 3) {
+              _bookingTabVersion++;
+            }
           });
         },
         destinations: const [

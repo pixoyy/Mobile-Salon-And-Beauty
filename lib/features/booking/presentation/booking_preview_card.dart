@@ -111,10 +111,10 @@ class _StatusChip extends StatelessWidget {
     final Color foregroundColor;
 
     switch (status) {
-      case BookingStatus.pending:
+      case BookingStatus.upcoming:
         backgroundColor = const Color(0xFFFFF2CC);
         foregroundColor = const Color(0xFF8A5B00);
-      case BookingStatus.confirmed:
+      case BookingStatus.onGoing:
         backgroundColor = const Color(0xFFE3F3E8);
         foregroundColor = const Color(0xFF1F7A3D);
       case BookingStatus.completed:
@@ -144,10 +144,10 @@ class _StatusChip extends StatelessWidget {
 
 String _statusLabel(BookingStatus status) {
   switch (status) {
-    case BookingStatus.pending:
-      return 'Pending';
-    case BookingStatus.confirmed:
-      return 'Confirmed';
+    case BookingStatus.upcoming:
+      return 'Upcoming';
+    case BookingStatus.onGoing:
+      return 'On Going';
     case BookingStatus.completed:
       return 'Completed';
     case BookingStatus.cancelled:

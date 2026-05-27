@@ -1,6 +1,19 @@
+import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_detail_page.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_preview_card.dart';
+import 'package:salon_and_beauty/features/stylist/data/dummy_stylists.dart';
+import 'package:salon_and_beauty/features/stylist/data/stylist_model.dart';
+import 'package:salon_and_beauty/features/stylist/presentation/stylist_detail_page.dart';
+import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
+import 'package:salon_and_beauty/features/service/data/service_repository.dart';
 
+import '../../../core/data/discount_repository.dart';
+import '../../../core/data/dummy_discounts.dart';
 import '../../../core/models/discount.dart';
 import '../../../core/theme/app_colors.dart';
 
@@ -33,59 +46,11 @@ class _DiscountSlider extends StatefulWidget {
 
 class _DiscountSliderState extends State<_DiscountSlider> {
   late PageController _controller;
+  Timer? _autoSlideTimer;
 
   double _currentPage = 0;
 
-  final List<Discount> discounts = [
-    Discount(
-      code: "GLAMORA20",
-      title: "All Hair Treatment",
-      percent: 20,
-      maxAmount: 50000,
-      minSpend: 100000,
-      startDate: DateTime(2026, 5, 1),
-      endDate: DateTime(2026, 5, 31),
-    ),
-
-    Discount(
-      code: "NAIL30",
-      title: "Nail Art & Spa",
-      percent: 30,
-      maxAmount: 75000,
-      minSpend: 150000,
-      startDate: DateTime(2026, 6, 1),
-      endDate: DateTime(2026, 6, 30),
-    ),
-
-    Discount(
-      code: "FACIAL15",
-      title: "Premium Facial",
-      percent: 15,
-      maxAmount: 30000,
-      minSpend: 90000,
-      startDate: DateTime(2026, 7, 1),
-      endDate: DateTime(2026, 7, 31),
-    ),
-    Discount(
-      code: "KERATIN35",
-      title: "Keratin Smooth Hair",
-      percent: 35,
-      maxAmount: 85000,
-      minSpend: 200000,
-      startDate: DateTime(2026, 10, 1),
-      endDate: DateTime(2026, 10, 31),
-    ),
-
-    Discount(
-      code: "WEDDING50",
-      title: "Wedding Package",
-      percent: 50,
-      maxAmount: 200000,
-      minSpend: 500000,
-      startDate: DateTime(2026, 11, 1),
-      endDate: DateTime(2026, 11, 30),
-    ),
-  ];
+  List<Discount> _discounts = List<Discount>.from(DummyDiscounts.data);
 
   @override
   void initState() {
@@ -101,18 +66,31 @@ class _DiscountSliderState extends State<_DiscountSlider> {
       });
     });
 
+    _loadDiscounts();
     autoSlide();
   }
 
-  void autoSlide() async {
-    while (mounted) {
-      await Future.delayed(const Duration(seconds: 4));
+  Future<void> _loadDiscounts() async {
+    final loaded = await DiscountRepository().getAllDiscounts();
+    if (!mounted || loaded.isEmpty) {
+      return;
+    }
 
-      if (!_controller.hasClients) continue;
+    setState(() {
+      _discounts = List<Discount>.from(loaded);
+    });
+  }
+
+  void autoSlide() async {
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_controller.hasClients) {
+        return;
+      }
 
       int nextPage = (_controller.page ?? 0).round() + 1;
 
-      if (nextPage >= discounts.length) {
+      if (nextPage >= _discounts.length) {
         nextPage = 0;
       }
 
@@ -121,11 +99,12 @@ class _DiscountSliderState extends State<_DiscountSlider> {
         duration: const Duration(milliseconds: 700),
         curve: Curves.easeInOut,
       );
-    }
+    });
   }
 
   @override
   void dispose() {
+    _autoSlideTimer?.cancel();
     _controller.dispose();
     super.dispose();
   }
@@ -145,10 +124,10 @@ class _DiscountSliderState extends State<_DiscountSlider> {
 
           child: PageView.builder(
             controller: _controller,
-            itemCount: discounts.length,
+            itemCount: _discounts.length,
 
             itemBuilder: (context, index) {
-              final d = discounts[index];
+              final d = _discounts[index];
 
               final scale = _getScale(index);
 
@@ -363,7 +342,7 @@ class _DiscountSliderState extends State<_DiscountSlider> {
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
 
-          children: List.generate(discounts.length, (index) {
+          children: List.generate(_discounts.length, (index) {
             final isActive = index == _currentPage.round();
 
             return AnimatedContainer(
@@ -461,20 +440,20 @@ class _DashboardView extends StatelessWidget {
                     ],
                   ),
 
-                  Container(
-                    height: 48,
-                    width: 48,
+                  // Container(
+                  //   height: 48,
+                  //   width: 48,
 
-                    decoration: BoxDecoration(
-                      color: AppColors.surface,
+                  //   decoration: BoxDecoration(
+                  //     color: AppColors.surface,
 
-                      borderRadius: BorderRadius.circular(16),
+                  //     borderRadius: BorderRadius.circular(16),
 
-                      border: Border.all(color: AppColors.border),
-                    ),
+                  //     border: Border.all(color: AppColors.border),
+                  //   ),
 
-                    child: const Icon(Icons.notifications_none_rounded),
-                  ),
+                  //   // child: const Icon(Icons.notifications_none_rounded),
+                  // ),
                 ],
               ),
 
@@ -487,7 +466,7 @@ class _DashboardView extends StatelessWidget {
 
               /// QUICK ACTION
               Text(
-                'Menu Cepat',
+                'Recommend Stylist',
 
                 style: Theme.of(
                   context,
@@ -496,7 +475,7 @@ class _DashboardView extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              _QuickActionGrid(actions: snapshot?.quickActions ?? const []),
+              _StylistList(stylists: DummyStylists.data),
 
               const SizedBox(height: 26),
 
@@ -511,7 +490,7 @@ class _DashboardView extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              _BookingCard(snapshot: snapshot),
+              const _NearestBookingSection(),
             ],
           ),
         );
@@ -521,174 +500,439 @@ class _DashboardView extends StatelessWidget {
 }
 
 /// ======================================================
-/// QUICK GRID
+/// QUICK STYLIST CAROUSEL
 /// ======================================================
-class _QuickActionGrid extends StatelessWidget {
-  const _QuickActionGrid({required this.actions});
+class _StylistList extends StatefulWidget {
+  const _StylistList({required this.stylists});
 
-  final List<dynamic> actions;
+  final List<StylistModel> stylists;
+
+  @override
+  State<_StylistList> createState() => _StylistListState();
+}
+
+class _StylistListState extends State<_StylistList> {
+  late final PageController _controller;
+  Timer? _autoSlideTimer;
+  double _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+
+    _controller = PageController(viewportFraction: 0.88);
+    _controller.addListener(() {
+      if (!_controller.hasClients) return;
+
+      setState(() {
+        _currentPage = _controller.page ?? 0;
+      });
+    });
+
+    _startAutoSlide();
+  }
+
+  void _startAutoSlide() {
+    _autoSlideTimer?.cancel();
+    _autoSlideTimer = Timer.periodic(const Duration(seconds: 4), (_) {
+      if (!mounted || !_controller.hasClients || widget.stylists.isEmpty) {
+        return;
+      }
+
+      var nextPage = (_controller.page ?? 0).round() + 1;
+      if (nextPage >= widget.stylists.length) {
+        nextPage = 0;
+      }
+
+      _controller.animateToPage(
+        nextPage,
+        duration: const Duration(milliseconds: 650),
+        curve: Curves.easeInOut,
+      );
+    });
+  }
+
+  @override
+  void dispose() {
+    _autoSlideTimer?.cancel();
+    _controller.dispose();
+    super.dispose();
+  }
+
+  double _getScale(int index) {
+    final scale = 1 - ((_currentPage - index).abs() * 0.06);
+    return scale.clamp(0.94, 1.0);
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (actions.isEmpty) {
-      return const SizedBox();
+    if (widget.stylists.isEmpty) {
+      return const SizedBox.shrink();
     }
 
-    final icons = [
-      Icons.content_cut_rounded,
-      Icons.spa_rounded,
-      Icons.face_retouching_natural_rounded,
-      Icons.calendar_month_rounded,
-    ];
+    return SizedBox(
+      height: 200,
+      child: PageView.builder(
+        controller: _controller,
+        scrollDirection: Axis.vertical,
+        itemCount: widget.stylists.length,
+        itemBuilder: (context, index) {
+          final stylist = widget.stylists[index];
 
-    return GridView.builder(
-      itemCount: actions.length,
-
-      shrinkWrap: true,
-
-      physics: const NeverScrollableScrollPhysics(),
-
-      gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-        crossAxisCount: 4,
-        mainAxisSpacing: 14,
-        crossAxisSpacing: 14,
-        childAspectRatio: 0.82,
+          return Transform.scale(
+            scale: _getScale(index),
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _StylistSlideCard(stylist: stylist),
+            ),
+          );
+        },
       ),
+    );
+  }
+}
 
-      itemBuilder: (context, index) {
-        final action = actions[index];
+class _StylistSlideCard extends StatelessWidget {
+  const _StylistSlideCard({required this.stylist});
 
-        return Column(
-          children: [
-            Container(
-              height: 72,
-              width: 72,
+  final StylistModel stylist;
 
-              decoration: BoxDecoration(
-                color: AppColors.surface,
+  @override
+  Widget build(BuildContext context) {
+    final rating = stylist.rating;
 
-                borderRadius: BorderRadius.circular(22),
-
-                border: Border.all(color: AppColors.border),
-
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.black.withOpacity(0.03),
-
-                    blurRadius: 10,
-                    offset: const Offset(0, 6),
+    return Material(
+      color: Colors.transparent,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(28),
+        onTap: () {
+          Navigator.of(context).push(
+            MaterialPageRoute<void>(
+              builder: (_) => StylistDetailPage(stylistId: stylist.id),
+            ),
+          );
+        },
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(28),
+            gradient: const LinearGradient(
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+              colors: [Color(0xFFFDF7F3), Color(0xFFFFFFFF)],
+            ),
+            border: Border.all(color: AppColors.border),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
+              ),
+            ],
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(22),
+                  child: Image.network(
+                    stylist.photoUrl,
+                    width: 82,
+                    height: 160,
+                    fit: BoxFit.cover,
                   ),
-                ],
-              ),
-
-              child: Icon(
-                icons[index % icons.length],
-
-                color: AppColors.primary,
-                size: 32,
-              ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 9,
+                          vertical: 4,
+                        ),
+                        decoration: BoxDecoration(
+                          color: AppColors.primary.withValues(alpha: 0.08),
+                          borderRadius: BorderRadius.circular(999),
+                        ),
+                        child: const Text(
+                          'Recommended',
+                          style: TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            color: AppColors.primary,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        stylist.name,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w800,
+                        ),
+                      ),
+                      const SizedBox(height: 3),
+                      Text(
+                        stylist.specialization,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 11,
+                          color: Colors.black54,
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                      Row(
+                        children: [
+                          const Icon(
+                            Icons.star_rounded,
+                            color: Colors.amber,
+                            size: 17,
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            rating.toStringAsFixed(1),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          Text(
+                            '(${stylist.reviewCount} ulasan)',
+                            style: const TextStyle(
+                              fontSize: 11,
+                              color: Colors.black45,
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      const Align(
+                        alignment: Alignment.centerRight,
+                        child: Icon(
+                          Icons.arrow_forward_ios_rounded,
+                          size: 13,
+                          color: AppColors.primary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
             ),
+          ),
+        ),
+      ),
+    );
+  }
+}
 
-            const SizedBox(height: 10),
+/// ======================================================
+/// BOOKING TERDEKAT
+/// ======================================================
+class _NearestBookingSection extends StatefulWidget {
+  const _NearestBookingSection();
 
-            Text(
-              action.title ?? '',
+  @override
+  State<_NearestBookingSection> createState() => _NearestBookingSectionState();
+}
 
-              textAlign: TextAlign.center,
+class _NearestBookingSectionState extends State<_NearestBookingSection> {
+  final BookingRepository _bookingRepository = BookingRepository();
+  final StylistRepository _stylistRepository = StylistRepository();
+  final ServiceRepository _serviceRepository = ServiceRepository();
 
-              style: const TextStyle(fontSize: 13, fontWeight: FontWeight.w600),
+  late Future<_NearestBookingCardData?> _bookingFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookingFuture = _loadNearestBooking();
+  }
+
+  Future<void> _refreshBooking() async {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _bookingFuture = _loadNearestBooking();
+    });
+  }
+
+  Future<_NearestBookingCardData?> _loadNearestBooking() async {
+    try {
+      final results = await Future.wait<dynamic>([
+        _bookingRepository.getAllBookings(),
+        _stylistRepository.getAllStylists(),
+        _serviceRepository.getAllServices(),
+      ]);
+
+      final List<BookingModel> bookings = results[0] as List<BookingModel>;
+      final List<dynamic> stylists = results[1] as List<dynamic>;
+      final List<dynamic> services = results[2] as List<dynamic>;
+
+      final BookingModel? nearestBooking = _selectNearestBooking(bookings);
+      if (nearestBooking == null) {
+        return null;
+      }
+
+      final Map<String, dynamic> stylistById = {
+        for (final stylist in stylists) stylist.id as String: stylist,
+      };
+      final Map<String, String> serviceNameById = {
+        for (final service in services) service.id as String: service.name as String,
+      };
+
+      final dynamic stylist = stylistById[nearestBooking.stylistId];
+      final List<String> serviceNames = nearestBooking.serviceIds
+          .map((id) => serviceNameById[id] ?? id)
+          .toList(growable: false);
+
+      return _NearestBookingCardData(
+        booking: nearestBooking,
+        stylistName: stylist?.name as String? ?? nearestBooking.stylistId,
+        stylistPhotoUrl: stylist?.photoUrl as String? ?? 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+        serviceNames: serviceNames,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  BookingModel? _selectNearestBooking(List<BookingModel> bookings) {
+    final DateTime now = DateTime.now();
+    final List<BookingModel> candidates = bookings
+        .where(
+          (booking) => booking.status == BookingStatus.onGoing || booking.bookingDateTime.isAfter(now),
+        )
+        .toList(growable: false);
+
+    if (candidates.isEmpty) {
+      return null;
+    }
+
+    candidates.sort((a, b) => a.bookingDateTime.compareTo(b.bookingDateTime));
+    return candidates.first;
+  }
+
+  Future<void> _openBookingDetail(_NearestBookingCardData data) async {
+    final BookingModel? updated = await Navigator.of(context).push<BookingModel>(
+      MaterialPageRoute<BookingModel>(
+        builder: (_) => BookingDetailPage(booking: data.booking),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (updated != null) {
+      await _refreshBooking();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return FutureBuilder<_NearestBookingCardData?>(
+      future: _bookingFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 112,
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.border),
             ),
-          ],
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
+
+        final _NearestBookingCardData? data = snapshot.data;
+        if (data == null) {
+          return Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
+                ),
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  height: 58,
+                  width: 58,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month_rounded,
+                    color: AppColors.primary,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Booking Terdekat',
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Belum ada jadwal booking yang akan datang',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return BookingPreviewCard(
+          booking: data.booking,
+          stylistName: data.stylistName,
+          stylistPhotoUrl: data.stylistPhotoUrl,
+          serviceNames: data.serviceNames,
+          onTap: () => _openBookingDetail(data),
         );
       },
     );
   }
 }
 
-/// ======================================================
-/// BOOKING CARD
-/// ======================================================
-class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.snapshot});
+class _NearestBookingCardData {
+  const _NearestBookingCardData({
+    required this.booking,
+    required this.stylistName,
+    required this.stylistPhotoUrl,
+    required this.serviceNames,
+  });
 
-  final dynamic snapshot;
-
-  @override
-  Widget build(BuildContext context) {
-    if (snapshot == null) {
-      return const SizedBox();
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(24),
-
-        border: Border.all(color: AppColors.border),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-
-      child: Row(
-        children: [
-          Container(
-            height: 58,
-            width: 58,
-
-            decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-
-              borderRadius: BorderRadius.circular(18),
-            ),
-
-            child: const Icon(
-              Icons.calendar_month_rounded,
-
-              color: AppColors.primary,
-              size: 30,
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-
-              children: [
-                const Text(
-                  'Jadwal Booking',
-
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
-                ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  snapshot?.nextBooking?.dateLabel ?? '-',
-
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          const Icon(Icons.chevron_right_rounded, color: Colors.black45),
-        ],
-      ),
-    );
-  }
+  final BookingModel booking;
+  final String stylistName;
+  final String stylistPhotoUrl;
+  final List<String> serviceNames;
 }

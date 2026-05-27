@@ -17,10 +17,10 @@ class DummyUser {
 
     const UserModel(
       id: 'cus-002',
-      name: 'Nabila Zahra',
-      email: 'nabila.zahra@example.com',
+      name: 'vania',
+      email: 'vania@gmail.com',
       phone: '081234567891',
-      password: 'password123',
+      password: 'password',
     ),
 
     const UserModel(

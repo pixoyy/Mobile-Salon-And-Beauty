@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../bloc/stylist_cubit.dart';
 import '../../booking/presentation/booking_schedule_page.dart';
+import '../../shell/presentation/app_shell.dart';
 import '../data/stylist_model.dart';
 import '../data/stylist_repository.dart';
 
@@ -37,16 +39,16 @@ class _StylistDetailView extends StatelessWidget {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Detail Stylist'),
-            actions: [
-              IconButton(
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Fitur bagikan akan hadir di phase berikutnya.')),
-                  );
-                },
-                icon: const Icon(Icons.ios_share_outlined),
-              ),
-            ],
+            // actions: [
+            //   IconButton(
+            //     onPressed: () {
+            //       ScaffoldMessenger.of(context).showSnackBar(
+            //         const SnackBar(content: Text('Fitur bagikan akan hadir di phase berikutnya.')),
+            //       );
+            //     },
+            //     icon: const Icon(Icons.ios_share_outlined),
+            //   ),
+            // ],
           ),
           body: switch (state.status) {
             StylistStatus.initial || StylistStatus.loading =>
@@ -66,8 +68,20 @@ class _StylistDetailView extends StatelessWidget {
                     width: double.infinity,
                     child: ElevatedButton.icon(
                       style: ElevatedButton.styleFrom(minimumSize: const Size.fromHeight(56)),
-                      onPressed: () {
-                        Navigator.of(context).push(MaterialPageRoute(builder: (_) => BookingSchedulePage(prefillStylistId: stylist.id)));
+                      onPressed: () async {
+                        final BookingModel? created = await Navigator.of(context).push<BookingModel?>(
+                          MaterialPageRoute<BookingModel?>(builder: (_) => BookingSchedulePage(prefillStylistId: stylist.id)),
+                        );
+
+                        if (!context.mounted) return;
+                        if (created != null) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute<void>(
+                              builder: (_) => const AppShell(initialIndex: 3),
+                            ),
+                            (route) => false,
+                          );
+                        }
                       },
                       icon: const Icon(Icons.calendar_month_outlined),
                       label: const Text('Book Stylist'),

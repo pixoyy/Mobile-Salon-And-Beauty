@@ -3,7 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/core/theme/app_colors.dart';
 import 'package:salon_and_beauty/features/auth/presentation/login_page.dart';
-import 'package:salon_and_beauty/features/user/bloc/user_bloc.dart';
+import 'package:salon_and_beauty/features/user/bloc/user_cubit.dart';
 import 'package:salon_and_beauty/features/user/data/user_repository.dart';
 import 'package:salon_and_beauty/features/user/presentation/change_password_page.dart';
 import 'package:salon_and_beauty/features/user/presentation/edit_profile_page.dart';
@@ -15,7 +15,7 @@ class UserMenuPage extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return BlocProvider(
-      create: (_) => UserBloc(UserRepository())..add(LoadUserEvent()),
+      create: (_) => UserCubit(UserRepository())..loadUser(),
       child: const _UserView(),
     );
   }
@@ -28,7 +28,7 @@ class _UserView extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
-      body: BlocBuilder<UserBloc, UserState>(
+      body: BlocBuilder<UserCubit, UserState>(
         builder: (context, state) {
           if (state is UserLoading) {
             return const Center(child: CircularProgressIndicator());
@@ -72,9 +72,7 @@ class _UserView extends StatelessWidget {
                                     );
 
                                     if (result == true && context.mounted) {
-                                      context.read<UserBloc>().add(
-                                        LoadUserEvent(),
-                                      );
+                                      context.read<UserCubit>().loadUser();
                                     }
                                   },
                                 ),
@@ -98,16 +96,20 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.lock_outline_rounded,
                                   title: 'Keamanan Akun',
                                   subtitle: 'Ubah password dan keamanan akun',
-                                  onTap: () {
-                                    Navigator.push(
+                                  onTap: () async {
+                                    await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => BlocProvider.value(
-                                          value: context.read<UserBloc>(),
+                                        builder: (_) => BlocProvider(
+                                          create: (_) => UserCubit(UserRepository()),
                                           child: const ChangePasswordPage(),
                                         ),
                                       ),
                                     );
+
+                                    if (context.mounted) {
+                                      context.read<UserCubit>().loadUser();
+                                    }
                                   },
                                 ),
                               ],
@@ -145,7 +147,7 @@ class _UserView extends StatelessWidget {
         : 'U';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 50, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),

@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../booking/presentation/booking_schedule_page.dart';
+import '../../shell/presentation/app_shell.dart';
 import '../bloc/service_cubit.dart';
 import '../data/service_model.dart';
 import '../data/service_repository.dart';
@@ -28,6 +31,7 @@ class _ServiceListView extends StatefulWidget {
 
 class _ServiceListViewState extends State<_ServiceListView> {
   final TextEditingController _searchController = TextEditingController();
+  final List<String> _selectedServiceIds = <String>[];
   List<String> _allCategories = [];
   String? _selectedCategory;
 
@@ -35,6 +39,53 @@ class _ServiceListViewState extends State<_ServiceListView> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _toggleServiceSelection(ServiceModel service) {
+    setState(() {
+      if (_selectedServiceIds.contains(service.id)) {
+        _selectedServiceIds.remove(service.id);
+      } else {
+        _selectedServiceIds.add(service.id);
+      }
+    });
+  }
+
+  List<ServiceModel> _selectedServices(ServiceListCubit cubit) {
+    final Map<String, ServiceModel> servicesById = {
+      for (final service in cubit.allServices) service.id: service,
+    };
+
+    return _selectedServiceIds
+        .map((id) => servicesById[id])
+        .whereType<ServiceModel>()
+        .toList(growable: false);
+  }
+
+  void _goToBooking(BuildContext context) {
+    if (_selectedServiceIds.isEmpty) return;
+
+    () async {
+      final BookingModel? created = await Navigator.of(context).push<BookingModel?>(
+        MaterialPageRoute<BookingModel?>(
+          builder: (_) => BookingSchedulePage(
+            prefillServiceIds: _selectedServiceIds.toList(growable: false),
+          ),
+        ),
+      );
+
+      if (!mounted) return;
+
+      if (created != null) {
+        // After successful booking, navigate user to the Booking tab inside AppShell.
+        Navigator.of(context).pushAndRemoveUntil(
+          MaterialPageRoute<void>(
+            builder: (_) => const AppShell(initialIndex: 3),
+          ),
+          (route) => false,
+        );
+      }
+    }();
   }
 
   @override
@@ -58,13 +109,16 @@ class _ServiceListViewState extends State<_ServiceListView> {
   Widget build(BuildContext context) {
     return BlocConsumer<ServiceListCubit, ServiceListState>(
       listener: (context, state) {
-              if (state.status == ServiceStatus.failure) {
+        if (state.status == ServiceStatus.failure) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(state.errorMessage ?? 'Gagal memuat layanan.')),
           );
         }
       },
       builder: (context, state) {
+        final ServiceListCubit serviceCubit = context.read<ServiceListCubit>();
+        final List<ServiceModel> selectedServices = _selectedServices(serviceCubit);
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('Layanan Salon'),
@@ -153,14 +207,14 @@ class _ServiceListViewState extends State<_ServiceListView> {
                                 : const SizedBox(height: 12),
                             itemBuilder: (context, index) {
                               if (index == state.services.length) {
-                                return _BookingCTA(
-                                  serviceCount: state.services.length,
-                                );
+                                return const SizedBox(height: 8);
                               }
 
                               final service = state.services[index];
                               return _ServiceCard(
                                 service: service,
+                                isSelected: _selectedServiceIds.contains(service.id),
+                                onToggleSelection: () => _toggleServiceSelection(service),
                                 onTap: () {
                                   Navigator.of(context).push(
                                     MaterialPageRoute(
@@ -175,6 +229,32 @@ class _ServiceListViewState extends State<_ServiceListView> {
                 ),
               ],
             ),
+          ),
+          bottomNavigationBar: AnimatedSwitcher(
+            duration: const Duration(milliseconds: 220),
+            switchInCurve: Curves.easeOutCubic,
+            switchOutCurve: Curves.easeInCubic,
+            transitionBuilder: (child, animation) {
+              final Animation<Offset> offsetAnimation = Tween<Offset>(
+                begin: const Offset(0, 0.18),
+                end: Offset.zero,
+              ).animate(animation);
+
+              return FadeTransition(
+                opacity: animation,
+                child: SlideTransition(position: offsetAnimation, child: child),
+              );
+            },
+            child: selectedServices.isEmpty
+                ? const SizedBox.shrink(key: ValueKey<String>('empty-cart'))
+                : SafeArea(
+                    key: const ValueKey<String>('filled-cart'),
+                    minimum: const EdgeInsets.fromLTRB(20, 0, 20, 16),
+                    child: _ServiceCartSummary(
+                      services: selectedServices,
+                      onContinue: () => _goToBooking(context),
+                    ),
+                  ),
           ),
         );
       },
@@ -228,10 +308,14 @@ class _ServiceListViewState extends State<_ServiceListView> {
 class _ServiceCard extends StatelessWidget {
   const _ServiceCard({
     required this.service,
+    required this.isSelected,
+    required this.onToggleSelection,
     required this.onTap,
   });
 
   final ServiceModel service;
+  final bool isSelected;
+  final VoidCallback onToggleSelection;
   final VoidCallback onTap;
 
   String get _priceLabel {
@@ -343,17 +427,165 @@ class _ServiceCard extends StatelessWidget {
                           label: _priceLabel,
                         ),
                         const Spacer(),
-                        TextButton(
-                          onPressed: onTap,
-                          child: const Text('Pilih'),
+                        IconButton.filledTonal(
+                          onPressed: onToggleSelection,
+                          tooltip: isSelected ? 'Hapus dari cart' : 'Tambah ke cart',
+                          icon: AnimatedSwitcher(
+                            duration: const Duration(milliseconds: 160),
+                            child: Icon(
+                              isSelected ? Icons.remove_rounded : Icons.add_rounded,
+                              key: ValueKey<bool>(isSelected),
+                            ),
+                          ),
                         ),
                       ],
                     ),
+                    if (isSelected) ...[
+                      const SizedBox(height: 10),
+                      Align(
+                        alignment: Alignment.centerLeft,
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: AppColors.primary.withValues(alpha: 0.10),
+                            borderRadius: BorderRadius.circular(999),
+                          ),
+                          child: Text(
+                            'Di cart',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: AppColors.primaryDark,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+}
+
+class _ServiceCartSummary extends StatelessWidget {
+  const _ServiceCartSummary({
+    required this.services,
+    required this.onContinue,
+  });
+
+  final List<ServiceModel> services;
+  final VoidCallback onContinue;
+
+  int get _totalPrice => services.fold<int>(0, (sum, service) => sum + service.price);
+
+  int get _totalDuration => services.fold<int>(0, (sum, service) => sum + service.durationMinutes);
+
+  String _formatPrice(int price) {
+    final String raw = price.toString();
+    final StringBuffer buffer = StringBuffer();
+    for (var index = 0; index < raw.length; index++) {
+      final int reverseIndex = raw.length - index;
+      buffer.write(raw[index]);
+      if (reverseIndex > 1 && reverseIndex % 3 == 1) {
+        buffer.write('.');
+      }
+    }
+    return 'Rp. ${buffer.toString()}';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Material(
+      color: AppColors.primary,
+      borderRadius: BorderRadius.circular(24),
+      child: Container(
+        padding: const EdgeInsets.all(18),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: AppColors.primary.withValues(alpha: 0.20),
+              blurRadius: 20,
+              offset: const Offset(0, 10),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: Colors.white.withValues(alpha: 0.18),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(Icons.shopping_cart_checkout_rounded, color: Colors.white, size: 26),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              'Cart Layanan',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    color: Colors.white,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                            ),
+                          ),
+                          Text(
+                            _formatPrice(_totalPrice),
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.w800,
+                                ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        '${services.length} layanan • $_totalDuration menit',
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: Colors.white.withValues(alpha: 0.92),
+                            ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            const SizedBox(height: 14),
+            SizedBox(
+              width: double.infinity,
+              child: ElevatedButton.icon(
+                style: ElevatedButton.styleFrom(
+                  minimumSize: const Size.fromHeight(52),
+                  backgroundColor: Colors.white,
+                  foregroundColor: AppColors.primary,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                onPressed: onContinue,
+                icon: const Icon(Icons.arrow_forward_rounded),
+                label: const Text('Lanjut ke Booking'),
+              ),
+            ),
+          ],
         ),
       ),
     );
@@ -405,69 +637,6 @@ class _InfoPill extends StatelessWidget {
                 ),
           ),
         ],
-      ),
-    );
-  }
-}
-
-class _BookingCTA extends StatelessWidget {
-  const _BookingCTA({required this.serviceCount});
-
-  final int serviceCount;
-
-  @override
-  Widget build(BuildContext context) {
-    return Material(
-      color: AppColors.primary,
-      borderRadius: BorderRadius.circular(22),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(22),
-        onTap: () {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Flow booking akan dilanjutkan di Phase 4.')),
-          );
-        },
-        child: Container(
-          padding: const EdgeInsets.all(18),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(22),
-            boxShadow: [
-              BoxShadow(
-                color: AppColors.primary.withValues(alpha: 0.18),
-                blurRadius: 18,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
-          child: Row(
-            children: [
-              const Icon(Icons.shopping_bag_outlined, color: Colors.white),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Lihat Booking',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                            color: Colors.white,
-                            fontWeight: FontWeight.w800,
-                          ),
-                    ),
-                    const SizedBox(height: 2),
-                    Text(
-                      '$serviceCount layanan tersedia untuk dipilih',
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                            color: Colors.white.withValues(alpha: 0.88),
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              const Icon(Icons.arrow_forward_ios_rounded, color: Colors.white, size: 16),
-            ],
-          ),
-        ),
       ),
     );
   }
