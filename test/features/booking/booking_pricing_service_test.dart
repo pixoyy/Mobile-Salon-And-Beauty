@@ -1,5 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../test_helper.dart';
 import 'package:salon_and_beauty/core/data/dummy_discounts.dart';
 import 'package:salon_and_beauty/core/models/discount.dart';
 import 'package:salon_and_beauty/features/booking/domain/booking_pricing_service.dart';
@@ -69,6 +70,9 @@ const List<ServiceModel> _noPromoServices = <ServiceModel>[
 ];
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   test('applies the active promo when min spend is met and cap is respected', () async {
     final PricingResult result = await BookingPricingService.calculate(
       _activePromoServices,

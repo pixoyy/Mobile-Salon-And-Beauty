@@ -1,11 +1,15 @@
 import 'package:flutter_test/flutter_test.dart';
 
+import '../../test_helper.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
 import 'package:salon_and_beauty/features/user/data/user_model.dart';
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   UserModel? previousUser;
 
   setUp(() {

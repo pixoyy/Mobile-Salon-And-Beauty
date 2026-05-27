@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 
 import '../../service/data/service_model.dart';
@@ -269,13 +270,19 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading(previousState: _scheduleState));
 
     try {
-      print('DBG: BookingCubit.loadAvailableSlots: start for $stylistId ${date.toIso8601String()}');
+      if (kDebugMode) {
+        // ignore: avoid_print
+        debugPrint('DBG: BookingCubit.loadAvailableSlots: start for $stylistId ${date.toIso8601String()}');
+      }
       final List<String> slots = await _bookingRepository.getAvailableSlotsForStylist(
         stylistId,
         _scheduleState.selectedDate!,
         durationMinutes: await _selectedServicesDurationMinutes(),
       );
-      print('DBG: BookingCubit.loadAvailableSlots: got ${slots.length} slots');
+      if (kDebugMode) {
+        // ignore: avoid_print
+        debugPrint('DBG: BookingCubit.loadAvailableSlots: got ${slots.length} slots');
+      }
 
       final bool hasCurrentTime =
           _scheduleState.selectedTime != null && slots.contains(_scheduleState.selectedTime);

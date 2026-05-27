@@ -1,7 +1,7 @@
 import '../../service/data/service_model.dart';
 import '../../booking/data/payment_model.dart';
 import '../../../core/models/discount.dart';
-import '../../../core/data/dummy_discounts.dart';
+import '../../../core/data/discount_repository.dart';
 
 class PricingResult {
   PricingResult({required this.payment, this.appliedDiscount});
@@ -15,7 +15,7 @@ class BookingPricingService {
 
   /// Calculate pricing for given services and optional discounts list.
   ///
-  /// Policy: auto-apply the dummy discount with the highest `minSpend`
+  /// Policy: auto-apply the available discount with the highest `minSpend`
   /// that does not exceed the subtotal, then cap the discount amount.
   static Future<PricingResult> calculate(
     List<ServiceModel> services, {
@@ -24,7 +24,7 @@ class BookingPricingService {
   }) async {
     final int subtotal = services.fold<int>(0, (s, item) => s + item.price);
 
-    final List<Discount> pool = discounts ?? DummyDiscounts.data;
+    final List<Discount> pool = discounts ?? await DiscountRepository().getAllDiscounts();
 
     Discount? best;
     int bestMinSpend = -1;

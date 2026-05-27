@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'test_helper.dart';
+import 'test_utils.dart';
 
 import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
@@ -30,10 +32,13 @@ Future<void> _pumpServiceListPage(WidgetTester tester) async {
       ),
     ),
   );
-  await tester.pumpAndSettle(const Duration(seconds: 1));
+  await waitForAppReady(tester);
 }
 
 void main() {
+  setUpAll(() async {
+    await initTestEnv();
+  });
   testWidgets('defaults to Semua category selected', (WidgetTester tester) async {
     await _pumpServiceListPage(tester);
 

@@ -80,7 +80,7 @@ class UserRepository {
   }) async {
     await Future.delayed(const Duration(seconds: 1));
 
-    final success = _authRepository.changePassword(
+    final success = await _authRepository.changePassword(
       oldPassword: oldPassword,
       newPassword: newPassword,
     );

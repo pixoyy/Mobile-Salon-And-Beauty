@@ -1,14 +1,19 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import '../../test_helper.dart';
+import '../../test_utils.dart';
 
 import 'package:salon_and_beauty/features/booking/presentation/history_page.dart';
 import 'package:salon_and_beauty/features/booking/presentation/booking_preview_card.dart';
 
 void main() {
   group('HistoryPage Widget Tests', () {
+    setUpAll(() async {
+      await initTestEnv();
+    });
     testWidgets('displays filter chips for status filtering', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pumpAndSettle();
+      await waitForFinder(tester, find.text('Riwayat'));
 
       // Verify all filter chips are present (as ChoiceChip ancestors)
       expect(find.ancestor(of: find.text('Semua'), matching: find.byType(ChoiceChip)), findsWidgets);
@@ -23,7 +28,7 @@ void main() {
 
     testWidgets('tap filter chip updates selection', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pumpAndSettle();
+      await waitForFinder(tester, find.text('Riwayat'));
 
       // Tap the first ChoiceChip instance that contains the 'Pending' label
       final Finder upcomingChip = find.ancestor(of: find.text('Upcoming'), matching: find.byType(ChoiceChip)).at(0);
@@ -37,7 +42,7 @@ void main() {
 
     testWidgets('app has title Riwayat in appbar', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pumpAndSettle();
+      await waitForFinder(tester, find.text('Riwayat'));
 
       final Finder appBar = find.byType(AppBar);
       expect(appBar, findsOneWidget);
@@ -48,7 +53,7 @@ void main() {
 
     testWidgets('displays booking list or empty state', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pumpAndSettle();
+      await waitForFinder(tester, find.text('Riwayat'));
 
       // Either a booking preview card exists or empty state message
       final Finder bookingCards = find.byType(BookingPreviewCard);
@@ -70,7 +75,7 @@ void main() {
 
     testWidgets('refresh indicator present in page', (WidgetTester tester) async {
       await tester.pumpWidget(const MaterialApp(home: HistoryPage()));
-      await tester.pumpAndSettle();
+      await waitForFinder(tester, find.text('Riwayat'));
 
       expect(find.byType(RefreshIndicator), findsOneWidget);
     });

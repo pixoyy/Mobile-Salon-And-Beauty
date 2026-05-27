@@ -33,4 +33,26 @@ class UserModel {
       imageUrl: imageUrl ?? this.imageUrl,
     );
   }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'password': password,
+      'imageUrl': imageUrl,
+    };
+  }
+
+  static UserModel fromMap(Map<String, dynamic> m) {
+    return UserModel(
+      id: m['id']?.toString() ?? '',
+      name: m['name']?.toString() ?? '',
+      email: m['email']?.toString() ?? '',
+      phone: m['phone']?.toString() ?? '',
+      password: m['password']?.toString() ?? '',
+      imageUrl: m['imageUrl']?.toString(),
+    );
+  }
 }

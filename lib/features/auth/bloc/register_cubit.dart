@@ -43,7 +43,7 @@ class RegisterCubit extends Cubit<RegisterState> {
 
     await Future<void>.delayed(const Duration(milliseconds: 450));
 
-    final result = _repository.register(
+    final result = await _repository.register(
       name: name,
       email: email,
       phone: phone,

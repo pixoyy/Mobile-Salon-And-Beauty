@@ -96,16 +96,20 @@ class _UserView extends StatelessWidget {
                                   icon: Icons.lock_outline_rounded,
                                   title: 'Keamanan Akun',
                                   subtitle: 'Ubah password dan keamanan akun',
-                                  onTap: () {
-                                    Navigator.push(
+                                  onTap: () async {
+                                    await Navigator.push(
                                       context,
                                       MaterialPageRoute(
-                                        builder: (_) => BlocProvider.value(
-                                          value: context.read<UserCubit>(),
+                                        builder: (_) => BlocProvider(
+                                          create: (_) => UserCubit(UserRepository()),
                                           child: const ChangePasswordPage(),
                                         ),
                                       ),
                                     );
+
+                                    if (context.mounted) {
+                                      context.read<UserCubit>().loadUser();
+                                    }
                                   },
                                 ),
                               ],
@@ -143,7 +147,7 @@ class _UserView extends StatelessWidget {
         : 'U';
 
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
+      padding: const EdgeInsets.fromLTRB(20, 50, 20, 0),
       child: Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 28),
