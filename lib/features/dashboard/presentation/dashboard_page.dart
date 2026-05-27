@@ -2,9 +2,15 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
+import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_detail_page.dart';
+import 'package:salon_and_beauty/features/booking/presentation/booking_preview_card.dart';
 import 'package:salon_and_beauty/features/stylist/data/dummy_stylists.dart';
 import 'package:salon_and_beauty/features/stylist/data/stylist_model.dart';
 import 'package:salon_and_beauty/features/stylist/presentation/stylist_detail_page.dart';
+import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
+import 'package:salon_and_beauty/features/service/data/service_repository.dart';
 
 import '../../../core/data/discount_repository.dart';
 import '../../../core/data/dummy_discounts.dart';
@@ -484,7 +490,7 @@ class _DashboardView extends StatelessWidget {
 
               const SizedBox(height: 14),
 
-              _BookingCard(snapshot: snapshot),
+              const _NearestBookingSection(),
             ],
           ),
         );
@@ -565,7 +571,7 @@ class _StylistListState extends State<_StylistList> {
     }
 
     return SizedBox(
-      height: 280,
+      height: 200,
       child: PageView.builder(
         controller: _controller,
         scrollDirection: Axis.vertical,
@@ -618,25 +624,25 @@ class _StylistSlideCard extends StatelessWidget {
             boxShadow: [
               BoxShadow(
                 color: Colors.black.withOpacity(0.05),
-                blurRadius: 16,
-                offset: const Offset(0, 8),
+                blurRadius: 14,
+                offset: const Offset(0, 6),
               ),
             ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(14),
+            padding: const EdgeInsets.all(12),
             child: Row(
               children: [
                 ClipRRect(
                   borderRadius: BorderRadius.circular(22),
                   child: Image.network(
                     stylist.photoUrl,
-                    width: 92,
-                    height: double.infinity,
+                    width: 82,
+                    height: 160,
                     fit: BoxFit.cover,
                   ),
                 ),
-                const SizedBox(width: 14),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -644,8 +650,8 @@ class _StylistSlideCard extends StatelessWidget {
                     children: [
                       Container(
                         padding: const EdgeInsets.symmetric(
-                          horizontal: 10,
-                          vertical: 5,
+                          horizontal: 9,
+                          vertical: 4,
                         ),
                         decoration: BoxDecoration(
                           color: AppColors.primary.withValues(alpha: 0.08),
@@ -660,39 +666,39 @@ class _StylistSlideCard extends StatelessWidget {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Text(
                         stylist.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 17,
+                          fontSize: 16,
                           fontWeight: FontWeight.w800,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 3),
                       Text(
                         stylist.specialization,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                         style: const TextStyle(
-                          fontSize: 12,
+                          fontSize: 11,
                           color: Colors.black54,
                         ),
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 8),
                       Row(
                         children: [
                           const Icon(
                             Icons.star_rounded,
                             color: Colors.amber,
-                            size: 18,
+                            size: 17,
                           ),
                           const SizedBox(width: 4),
                           Text(
                             rating.toStringAsFixed(1),
                             style: const TextStyle(
-                              fontSize: 13,
+                              fontSize: 12,
                               fontWeight: FontWeight.w700,
                             ),
                           ),
@@ -700,18 +706,18 @@ class _StylistSlideCard extends StatelessWidget {
                           Text(
                             '(${stylist.reviewCount} ulasan)',
                             style: const TextStyle(
-                              fontSize: 12,
+                              fontSize: 11,
                               color: Colors.black45,
                             ),
                           ),
                         ],
                       ),
-                      const SizedBox(height: 10),
+                      const SizedBox(height: 6),
                       const Align(
                         alignment: Alignment.centerRight,
                         child: Icon(
                           Icons.arrow_forward_ios_rounded,
-                          size: 14,
+                          size: 13,
                           color: AppColors.primary,
                         ),
                       ),
@@ -728,89 +734,205 @@ class _StylistSlideCard extends StatelessWidget {
 }
 
 /// ======================================================
-/// BOOKING CARD
+/// BOOKING TERDEKAT
 /// ======================================================
-class _BookingCard extends StatelessWidget {
-  const _BookingCard({required this.snapshot});
+class _NearestBookingSection extends StatefulWidget {
+  const _NearestBookingSection();
 
-  final dynamic snapshot;
+  @override
+  State<_NearestBookingSection> createState() => _NearestBookingSectionState();
+}
+
+class _NearestBookingSectionState extends State<_NearestBookingSection> {
+  final BookingRepository _bookingRepository = BookingRepository();
+  final StylistRepository _stylistRepository = StylistRepository();
+  final ServiceRepository _serviceRepository = ServiceRepository();
+
+  late Future<_NearestBookingCardData?> _bookingFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookingFuture = _loadNearestBooking();
+  }
+
+  Future<void> _refreshBooking() async {
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _bookingFuture = _loadNearestBooking();
+    });
+  }
+
+  Future<_NearestBookingCardData?> _loadNearestBooking() async {
+    try {
+      final results = await Future.wait<dynamic>([
+        _bookingRepository.getAllBookings(),
+        _stylistRepository.getAllStylists(),
+        _serviceRepository.getAllServices(),
+      ]);
+
+      final List<BookingModel> bookings = results[0] as List<BookingModel>;
+      final List<dynamic> stylists = results[1] as List<dynamic>;
+      final List<dynamic> services = results[2] as List<dynamic>;
+
+      final BookingModel? nearestBooking = _selectNearestBooking(bookings);
+      if (nearestBooking == null) {
+        return null;
+      }
+
+      final Map<String, dynamic> stylistById = {
+        for (final stylist in stylists) stylist.id as String: stylist,
+      };
+      final Map<String, String> serviceNameById = {
+        for (final service in services) service.id as String: service.name as String,
+      };
+
+      final dynamic stylist = stylistById[nearestBooking.stylistId];
+      final List<String> serviceNames = nearestBooking.serviceIds
+          .map((id) => serviceNameById[id] ?? id)
+          .toList(growable: false);
+
+      return _NearestBookingCardData(
+        booking: nearestBooking,
+        stylistName: stylist?.name as String? ?? nearestBooking.stylistId,
+        stylistPhotoUrl: stylist?.photoUrl as String? ?? 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+        serviceNames: serviceNames,
+      );
+    } catch (_) {
+      return null;
+    }
+  }
+
+  BookingModel? _selectNearestBooking(List<BookingModel> bookings) {
+    final DateTime now = DateTime.now();
+    final List<BookingModel> candidates = bookings
+        .where(
+          (booking) => booking.status == BookingStatus.onGoing || booking.bookingDateTime.isAfter(now),
+        )
+        .toList(growable: false);
+
+    if (candidates.isEmpty) {
+      return null;
+    }
+
+    candidates.sort((a, b) => a.bookingDateTime.compareTo(b.bookingDateTime));
+    return candidates.first;
+  }
+
+  Future<void> _openBookingDetail(_NearestBookingCardData data) async {
+    final BookingModel? updated = await Navigator.of(context).push<BookingModel>(
+      MaterialPageRoute<BookingModel>(
+        builder: (_) => BookingDetailPage(booking: data.booking),
+      ),
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    if (updated != null) {
+      await _refreshBooking();
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
-    if (snapshot == null) {
-      return const SizedBox();
-    }
-
-    return Container(
-      padding: const EdgeInsets.all(18),
-
-      decoration: BoxDecoration(
-        color: Colors.white,
-
-        borderRadius: BorderRadius.circular(24),
-
-        border: Border.all(color: AppColors.border),
-
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withOpacity(0.03),
-
-            blurRadius: 14,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
-
-      child: Row(
-        children: [
-          Container(
-            height: 58,
-            width: 58,
-
+    return FutureBuilder<_NearestBookingCardData?>(
+      future: _bookingFuture,
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return Container(
+            height: 112,
+            padding: const EdgeInsets.all(18),
             decoration: BoxDecoration(
-              color: AppColors.primary.withOpacity(0.1),
-
-              borderRadius: BorderRadius.circular(18),
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.border),
             ),
+            child: const Center(child: CircularProgressIndicator()),
+          );
+        }
 
-            child: const Icon(
-              Icons.calendar_month_rounded,
-
-              color: AppColors.primary,
-              size: 30,
-            ),
-          ),
-
-          const SizedBox(width: 16),
-
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-
-              children: [
-                const Text(
-                  'Jadwal Booking',
-
-                  style: TextStyle(fontSize: 13, color: Colors.black54),
+        final _NearestBookingCardData? data = snapshot.data;
+        if (data == null) {
+          return Container(
+            padding: const EdgeInsets.all(18),
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(24),
+              border: Border.all(color: AppColors.border),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 14,
+                  offset: const Offset(0, 8),
                 ),
-
-                const SizedBox(height: 6),
-
-                Text(
-                  snapshot?.nextBooking?.dateLabel ?? '-',
-
-                  style: const TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
+              ],
+            ),
+            child: Row(
+              children: [
+                Container(
+                  height: 58,
+                  width: 58,
+                  decoration: BoxDecoration(
+                    color: AppColors.primary.withOpacity(0.1),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: const Icon(
+                    Icons.calendar_month_rounded,
+                    color: AppColors.primary,
+                    size: 30,
+                  ),
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'Booking Terdekat',
+                        style: TextStyle(fontSize: 13, color: Colors.black54),
+                      ),
+                      const SizedBox(height: 6),
+                      Text(
+                        'Belum ada jadwal booking yang akan datang',
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: FontWeight.w700,
+                            ),
+                      ),
+                    ],
                   ),
                 ),
               ],
             ),
-          ),
+          );
+        }
 
-          const Icon(Icons.chevron_right_rounded, color: Colors.black45),
-        ],
-      ),
+        return BookingPreviewCard(
+          booking: data.booking,
+          stylistName: data.stylistName,
+          stylistPhotoUrl: data.stylistPhotoUrl,
+          serviceNames: data.serviceNames,
+          onTap: () => _openBookingDetail(data),
+        );
+      },
     );
   }
+}
+
+class _NearestBookingCardData {
+  const _NearestBookingCardData({
+    required this.booking,
+    required this.stylistName,
+    required this.stylistPhotoUrl,
+    required this.serviceNames,
+  });
+
+  final BookingModel booking;
+  final String stylistName;
+  final String stylistPhotoUrl;
+  final List<String> serviceNames;
 }
