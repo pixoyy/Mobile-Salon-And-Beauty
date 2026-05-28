@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:salon_and_beauty/core/utils/profile_image.dart';
 
 class UserHeader extends StatelessWidget {
   final String name;
@@ -16,6 +17,8 @@ class UserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final avatarImage = profileImageProvider(imageUrl);
+
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(24),
@@ -27,10 +30,8 @@ class UserHeader extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 40,
-            backgroundImage: imageUrl != null && imageUrl!.isNotEmpty
-                ? NetworkImage(imageUrl!)
-                : null,
-            child: imageUrl == null || imageUrl!.isEmpty
+            backgroundImage: avatarImage,
+            child: avatarImage == null
                 ? Text(
                     name.isNotEmpty ? name[0].toUpperCase() : '?',
                     style: const TextStyle(

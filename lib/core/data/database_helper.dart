@@ -1,10 +1,10 @@
 // import 'dart:io';
 
+import 'package:flutter/foundation.dart';
 import 'package:path/path.dart';
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
-import 'package:flutter/foundation.dart';
 import 'package:salon_and_beauty/core/data/seeder.dart';
+import 'package:sqflite/sqflite.dart';
 
 class DatabaseHelper {
   static final DatabaseHelper instance = DatabaseHelper._init();
@@ -17,6 +17,7 @@ class DatabaseHelper {
   /// to open that path instead of using getApplicationDocumentsDirectory().
   static void setTestDatabasePath(String? path) {
     testDatabasePath = path;
+    _database = null;
   }
 
   DatabaseHelper._init();
@@ -44,7 +45,7 @@ class DatabaseHelper {
 
     final db = await openDatabase(
       path,
-      version: 2,
+      version: 3,
       onCreate: _createDB,
       onUpgrade: _onUpgrade,
     );
@@ -85,6 +86,9 @@ class DatabaseHelper {
         await _ensureColumn(db, 'stylists', 'bio', "TEXT DEFAULT ''");
         await _ensureColumn(db, 'services', 'isPopular', 'INTEGER DEFAULT 0');
         break;
+      case 3:
+        await _ensureColumn(db, 'users', 'imageUrl', 'TEXT');
+        break;
       // case 2:
       //   await db.execute('ALTER TABLE bookings ADD COLUMN createdAt INTEGER');
       //   break;
@@ -105,7 +109,8 @@ class DatabaseHelper {
         name TEXT,
         email TEXT,
         phone TEXT,
-        password TEXT
+        password TEXT,
+        imageUrl TEXT
       )
     ''');
   }

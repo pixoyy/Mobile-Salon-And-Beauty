@@ -238,18 +238,13 @@ class AuthRepository {
   }
 
   /// UPDATE USER LOGIN SEKARANG
-  void updateCurrentUser(UserModel updatedUser) {
-
-    /// UPDATE SESSION
+  Future<void> updateCurrentUser(UserModel updatedUser) async {
     AuthSession.currentUser = updatedUser;
-    // persist user id
-    AuthSession.persistLogin(updatedUser);
+    await AuthSession.persistLogin(updatedUser);
 
-    /// UPDATE LIST USER
     final index = _registeredUsers.indexWhere((u) => u.id == updatedUser.id);
 
-    // update DB record as well
-    unawaited(_updateUserToDb(updatedUser));
+    await _updateUserToDb(updatedUser);
 
     if (index != -1) {
       _registeredUsers[index] = updatedUser;
