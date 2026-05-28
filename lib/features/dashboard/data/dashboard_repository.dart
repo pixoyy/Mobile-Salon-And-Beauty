@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:salon_and_beauty/core/session/auth_session.dart';
 
 class DashboardRepository {
   const DashboardRepository();
 
   DashboardSnapshot getSnapshot() {
-    return const DashboardSnapshot(
+    final activeUser = AuthSession.activeUser;
+
+    return DashboardSnapshot(
       customer: CustomerProfile(
-        name: 'Siska Amanda',
+        name: activeUser.name,
         greeting: 'Halo,',
-        email: 'siska.amanda@email.com',
+        email: activeUser.email,
       ),
       promo: PromoBanner(
         title: 'Special Promo',
