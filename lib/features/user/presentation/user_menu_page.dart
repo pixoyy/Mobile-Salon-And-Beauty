@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/core/theme/app_colors.dart';
+import 'package:salon_and_beauty/core/utils/profile_image.dart';
 import 'package:salon_and_beauty/features/auth/presentation/login_page.dart';
 import 'package:salon_and_beauty/features/user/bloc/user_cubit.dart';
 import 'package:salon_and_beauty/features/user/data/user_repository.dart';
@@ -139,8 +140,7 @@ class _UserView extends StatelessWidget {
   }
 
   Widget _buildHeader(BuildContext context, dynamic user) {
-    final hasImage =
-        user.imageUrl != null && user.imageUrl.toString().isNotEmpty;
+    final avatarImage = profileImageProvider(user.imageUrl);
 
     final initial = user.name.toString().isNotEmpty
         ? user.name.toString()[0].toUpperCase()
@@ -185,8 +185,8 @@ class _UserView extends StatelessWidget {
               child: CircleAvatar(
                 radius: 52,
                 backgroundColor: Colors.white,
-                backgroundImage: hasImage ? NetworkImage(user.imageUrl) : null,
-                child: !hasImage
+                backgroundImage: avatarImage,
+                child: avatarImage == null
                     ? Text(
                         initial,
                         style: TextStyle(

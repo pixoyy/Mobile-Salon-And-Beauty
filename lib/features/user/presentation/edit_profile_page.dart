@@ -1,6 +1,12 @@
+import 'dart:convert';
+import 'dart:typed_data';
+
+import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:salon_and_beauty/core/session/auth_session.dart';
 import 'package:salon_and_beauty/core/theme/app_colors.dart';
+import 'package:salon_and_beauty/core/utils/profile_image.dart';
+import 'package:salon_and_beauty/features/user/data/user_repository.dart';
 
 class EditProfilePage extends StatefulWidget {
   const EditProfilePage({super.key});
@@ -13,6 +19,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController phoneController;
+  Uint8List? _pickedImageBytes;
+  String? _pickedImageName;
+  bool _isSaving = false;
 
   @override
   void initState() {
@@ -35,12 +44,104 @@ class _EditProfilePageState extends State<EditProfilePage> {
     super.dispose();
   }
 
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+      allowMultiple: false,
+      withData: true,
+    );
+
+    if (result == null || result.files.isEmpty) {
+      return;
+    }
+
+    final file = result.files.single;
+    final bytes = file.bytes;
+
+    if (bytes == null) {
+      return;
+    }
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _pickedImageBytes = bytes;
+      _pickedImageName = file.name;
+    });
+  }
+
+  Future<void> _saveProfile() async {
+    final currentUser = AuthSession.currentUser;
+
+    if (currentUser == null) {
+      return;
+    }
+
+    final updatedUser = currentUser.copyWith(
+      name: nameController.text.trim(),
+      email: emailController.text.trim(),
+      phone: phoneController.text.trim(),
+      imageUrl: _pickedImageBytes == null
+          ? currentUser.imageUrl
+          : 'base64:${base64Encode(_pickedImageBytes!)}',
+    );
+
+    setState(() {
+      _isSaving = true;
+    });
+
+    try {
+      await UserRepository().updateProfile(updatedUser);
+
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: AppColors.primary,
+          content: const Text('Profile berhasil diperbarui'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+
+      Navigator.pop(context, true);
+    } catch (error) {
+      if (!mounted) {
+        return;
+      }
+
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          backgroundColor: Colors.redAccent,
+          content: Text('Gagal memperbarui profile: $error'),
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(14),
+          ),
+        ),
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSaving = false;
+        });
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final user = AuthSession.currentUser;
 
-    final hasImage =
-        user?.imageUrl != null && user!.imageUrl.toString().isNotEmpty;
+    final avatarImage = _pickedImageBytes != null
+      ? MemoryImage(_pickedImageBytes!)
+      : profileImageProvider(user?.imageUrl);
 
     final initial = user?.name.toString().isNotEmpty == true
         ? user!.name[0].toUpperCase()
@@ -54,7 +155,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           padding: const EdgeInsets.only(bottom: 120),
           child: Column(
             children: [
-              _buildHeader(context, hasImage, initial, user?.imageUrl),
+              _buildHeader(context, initial, avatarImage),
 
               const SizedBox(height: 28),
 
@@ -117,34 +218,11 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   borderRadius: BorderRadius.circular(18),
                 ),
               ),
-              onPressed: () {
-                final updatedUser = AuthSession.currentUser?.copyWith(
-                  name: nameController.text.trim(),
-                  email: emailController.text.trim(),
-                  phone: phoneController.text.trim(),
-                );
-
-                if (updatedUser != null) {
-                  AuthSession.currentUser = updatedUser;
-                }
-
-                ScaffoldMessenger.of(context).showSnackBar(
-                  SnackBar(
-                    backgroundColor: AppColors.primary,
-                    content: const Text('Profile berhasil diperbarui'),
-                    behavior: SnackBarBehavior.floating,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(14),
-                    ),
-                  ),
-                );
-
-                Navigator.pop(context, true);
-              },
+              onPressed: _isSaving ? null : _saveProfile,
               icon: const Icon(Icons.save_as_outlined, size: 24),
-              label: const Text(
-                'Simpan Perubahan',
-                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
+              label: Text(
+                _isSaving ? 'Menyimpan...' : 'Simpan Perubahan',
+                style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w700),
               ),
             ),
           ),
@@ -155,9 +233,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
   Widget _buildHeader(
     BuildContext context,
-    bool hasImage,
     String initial,
-    String? imageUrl,
+    ImageProvider<Object>? avatarImage,
   ) {
     return Padding(
       padding: const EdgeInsets.fromLTRB(20, 20, 20, 0),
@@ -240,8 +317,8 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   child: CircleAvatar(
                     radius: 52,
                     backgroundColor: Colors.white,
-                    backgroundImage: hasImage ? NetworkImage(imageUrl!) : null,
-                    child: !hasImage
+                    backgroundImage: avatarImage,
+                    child: avatarImage == null
                         ? Text(
                             initial,
                             style: TextStyle(
@@ -257,18 +334,25 @@ class _EditProfilePageState extends State<EditProfilePage> {
                 Positioned(
                   bottom: 0,
                   right: 0,
-                  child: Container(
-                    height: 38,
-                    width: 38,
-                    decoration: BoxDecoration(
-                      color: AppColors.secondary,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.white, width: 3),
-                    ),
-                    child: const Icon(
-                      Icons.camera_alt_rounded,
-                      color: Colors.white,
-                      size: 18,
+                  child: Material(
+                    color: AppColors.secondary,
+                    shape: const CircleBorder(),
+                    child: InkWell(
+                      onTap: _pickImage,
+                      customBorder: const CircleBorder(),
+                      child: Container(
+                        height: 38,
+                        width: 38,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white, width: 3),
+                        ),
+                        child: const Icon(
+                          Icons.camera_alt_rounded,
+                          color: Colors.white,
+                          size: 18,
+                        ),
+                      ),
                     ),
                   ),
                 ),
@@ -277,9 +361,21 @@ class _EditProfilePageState extends State<EditProfilePage> {
 
             const SizedBox(height: 25),
 
-            const Text(
-              'Ubah informasi profile Anda',
-              style: TextStyle(color: Colors.white70, fontSize: 16),
+            Column(
+              children: [
+                const Text(
+                  'Ubah informasi profile Anda',
+                  style: TextStyle(color: Colors.white70, fontSize: 16),
+                ),
+                if (_pickedImageName != null) ...[
+                  const SizedBox(height: 6),
+                  Text(
+                    _pickedImageName!,
+                    overflow: TextOverflow.ellipsis,
+                    style: const TextStyle(color: Colors.white54, fontSize: 12),
+                  ),
+                ],
+              ],
             ),
           ],
         ),
