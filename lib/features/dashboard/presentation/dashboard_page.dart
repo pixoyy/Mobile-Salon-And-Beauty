@@ -2,6 +2,8 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/core/session/auth_session.dart';
+import 'package:salon_and_beauty/core/utils/profile_image.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
 import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
 import 'package:salon_and_beauty/features/booking/presentation/booking_detail_page.dart';
@@ -404,94 +406,203 @@ class _DashboardView extends StatelessWidget {
     return BlocBuilder<DashboardCubit, DashboardState>(
       builder: (context, state) {
         final snapshot = state.snapshot;
+        final customerName = AuthSession.activeUser.name.isNotEmpty
+            ? AuthSession.activeUser.name
+            : (snapshot?.customer.name ?? 'Customer');
+        final greeting = snapshot?.customer.greeting ?? 'Halo,';
+        final profileImage = profileImageProvider(AuthSession.activeUser.imageUrl);
 
-        return RefreshIndicator(
-          onRefresh: () => context.read<DashboardCubit>().loadDashboard(),
+        return Scaffold(
+          backgroundColor: const Color(0xFFF8F3EF),
+          appBar: AppBar(
+            automaticallyImplyLeading: false,
+            elevation: 0,
+            backgroundColor: Colors.transparent,
+            toolbarHeight: 80,
+            titleSpacing: 20,
+            title: Row(
+              children: [
+                /// PROFILE
+                Container(
+                  width: 52,
+                  height: 52,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFB67891), Color(0xFF7D3C5A)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(18),
+                    child: profileImage != null
+                        ? Image(
+                            image: profileImage,
+                            fit: BoxFit.cover,
+                            width: 52,
+                            height: 52,
+                          )
+                        : Center(
+                            child: Text(
+                              customerName.isNotEmpty
+                                  ? customerName[0].toUpperCase()
+                                  : 'A',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 30,
+                              ),
+                            ),
+                          ),
+                  ),
+                ),
 
-          child: ListView(
-            padding: const EdgeInsets.fromLTRB(20, 20, 20, 30),
+                const SizedBox(width: 14),
 
-            children: [
-              /// HEADER
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                children: [
-                  Column(
+                /// TEXT
+                Expanded(
+                  child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
-
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      Text(
-                        snapshot?.customer.greeting ?? 'Halo,',
-
-                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                          color: AppColors.mutedText,
-                        ),
+                      Row(
+                        children: [
+                          Text(
+                            greeting,
+                            style: TextStyle(
+                              fontSize: 20,
+                              color: Colors.grey.shade600,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          const Text('👋', style: TextStyle(fontSize: 16)),
+                        ],
                       ),
 
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
 
                       Text(
-                        snapshot?.customer.name ?? 'Siska Amanda',
-
-                        style: Theme.of(context).textTheme.headlineSmall
-                            ?.copyWith(fontWeight: FontWeight.w800),
+                        customerName,
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                        style: const TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.w800,
+                          color: Colors.black87,
+                          height: 1.0,
+                          letterSpacing: 0.2,
+                          fontFamily: 'Montserrat',
+                          fontFamilyFallback: ['sans-serif'],
+                        ),
                       ),
                     ],
                   ),
+                ),
+              ],
+            ),
+          ),
+          body: RefreshIndicator(
+            onRefresh: () => context.read<DashboardCubit>().loadDashboard(),
+            child: ListView(
+              padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
+              children: [
+                // Container(
+                //   padding: const EdgeInsets.all(18),
+                //   decoration: BoxDecoration(
+                //     gradient: const LinearGradient(
+                //       begin: Alignment.topLeft,
+                //       end: Alignment.bottomRight,
+                //       colors: [Color(0xFFFFFFFF), Color(0xFFFDF7F3)],
+                //     ),
+                //     borderRadius: BorderRadius.circular(28),
+                //     border: Border.all(color: AppColors.border),
+                //     boxShadow: [
+                //       BoxShadow(
+                //         color: Colors.black.withOpacity(0.04),
+                //         blurRadius: 18,
+                //         offset: const Offset(0, 8),
+                //       ),
+                //     ],
+                //   ),
+                //   child: Row(
+                //     children: [
+                //       Container(
+                //         width: 56,
+                //         height: 56,
+                //         decoration: BoxDecoration(
+                //           color: AppColors.primary.withOpacity(0.1),
+                //           borderRadius: BorderRadius.circular(18),
+                //         ),
+                //         child: const Icon(
+                //           Icons.spa_rounded,
+                //           color: AppColors.primary,
+                //           size: 30,
+                //         ),
+                //       ),
+                //       const SizedBox(width: 14),
+                //       Expanded(
+                //         child: Column(
+                //           crossAxisAlignment: CrossAxisAlignment.start,
+                //           children: [
+                //             Text(
+                //               'Selamat datang di Glamora',
+                //               style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                //                 fontWeight: FontWeight.w800,
+                //               ),
+                //             ),
+                //             const SizedBox(height: 4),
+                //             Text(
+                //               'Pantau promo, stylist, dan booking terbaru dari dashboard ini.',
+                //               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                //                 color: AppColors.mutedText,
+                //                 height: 1.35,
+                //               ),
+                //             ),
+                //           ],
+                //         ),
+                //       ),
+                //     ],
+                //   ),
+                // ),
 
-                  // Container(
-                  //   height: 48,
-                  //   width: 48,
+                // const SizedBox(height: 22),
 
-                  //   decoration: BoxDecoration(
-                  //     color: AppColors.surface,
+                /// PROMO
+                const _DiscountSlider(),
 
-                  //     borderRadius: BorderRadius.circular(16),
+                const SizedBox(height: 26),
 
-                  //     border: Border.all(color: AppColors.border),
-                  //   ),
+                /// QUICK ACTION
+                Text(
+                  'Recommend Stylist',
 
-                  //   // child: const Icon(Icons.notifications_none_rounded),
-                  // ),
-                ],
-              ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
 
-              const SizedBox(height: 22),
+                const SizedBox(height: 14),
 
-              /// PROMO
-              const _DiscountSlider(),
+                _StylistList(stylists: DummyStylists.data),
 
-              const SizedBox(height: 26),
+                const SizedBox(height: 26),
 
-              /// QUICK ACTION
-              Text(
-                'Recommend Stylist',
+                /// BOOKING
+                Text(
+                  'Booking Terdekat',
 
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
+                  style: Theme.of(
+                    context,
+                  ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
+                ),
 
-              const SizedBox(height: 14),
+                const SizedBox(height: 14),
 
-              _StylistList(stylists: DummyStylists.data),
-
-              const SizedBox(height: 26),
-
-              /// BOOKING
-              Text(
-                'Booking Terdekat',
-
-                style: Theme.of(
-                  context,
-                ).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.w700),
-              ),
-
-              const SizedBox(height: 14),
-
-              const _NearestBookingSection(),
-            ],
+                const _NearestBookingSection(),
+              ],
+            ),
           ),
         );
       },
@@ -787,7 +898,8 @@ class _NearestBookingSectionState extends State<_NearestBookingSection> {
         for (final stylist in stylists) stylist.id as String: stylist,
       };
       final Map<String, String> serviceNameById = {
-        for (final service in services) service.id as String: service.name as String,
+        for (final service in services)
+          service.id as String: service.name as String,
       };
 
       final dynamic stylist = stylistById[nearestBooking.stylistId];
@@ -798,7 +910,9 @@ class _NearestBookingSectionState extends State<_NearestBookingSection> {
       return _NearestBookingCardData(
         booking: nearestBooking,
         stylistName: stylist?.name as String? ?? nearestBooking.stylistId,
-        stylistPhotoUrl: stylist?.photoUrl as String? ?? 'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
+        stylistPhotoUrl:
+            stylist?.photoUrl as String? ??
+            'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
         serviceNames: serviceNames,
       );
     } catch (_) {
@@ -810,7 +924,9 @@ class _NearestBookingSectionState extends State<_NearestBookingSection> {
     final DateTime now = DateTime.now();
     final List<BookingModel> candidates = bookings
         .where(
-          (booking) => booking.status == BookingStatus.onGoing || booking.bookingDateTime.isAfter(now),
+          (booking) =>
+              booking.status == BookingStatus.onGoing ||
+              booking.bookingDateTime.isAfter(now),
         )
         .toList(growable: false);
 
@@ -823,11 +939,12 @@ class _NearestBookingSectionState extends State<_NearestBookingSection> {
   }
 
   Future<void> _openBookingDetail(_NearestBookingCardData data) async {
-    final BookingModel? updated = await Navigator.of(context).push<BookingModel>(
-      MaterialPageRoute<BookingModel>(
-        builder: (_) => BookingDetailPage(booking: data.booking),
-      ),
-    );
+    final BookingModel? updated = await Navigator.of(context)
+        .push<BookingModel>(
+          MaterialPageRoute<BookingModel>(
+            builder: (_) => BookingDetailPage(booking: data.booking),
+          ),
+        );
 
     if (!mounted) {
       return;
@@ -900,8 +1017,8 @@ class _NearestBookingSectionState extends State<_NearestBookingSection> {
                       Text(
                         'Belum ada jadwal booking yang akan datang',
                         style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                              fontWeight: FontWeight.w700,
-                            ),
+                          fontWeight: FontWeight.w700,
+                        ),
                       ),
                     ],
                   ),

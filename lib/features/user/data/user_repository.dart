@@ -68,7 +68,7 @@ class UserRepository {
     await Future.delayed(const Duration(milliseconds: 300));
 
     /// UPDATE VIA AUTH REPOSITORY
-    _authRepository.updateCurrentUser(newUser);
+    await _authRepository.updateCurrentUser(newUser);
 
     return newUser;
   }
