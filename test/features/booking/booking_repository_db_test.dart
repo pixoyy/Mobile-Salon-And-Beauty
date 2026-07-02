@@ -1,9 +1,9 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:salon_and_beauty/core/data/database_helper.dart';
-import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
-import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
+import 'package:salon_and_beauty/Database/DatabaseHelper.dart';
+import 'package:salon_and_beauty/Models/BookingModel.dart';
+import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
 
 void main() {
   late Database db;

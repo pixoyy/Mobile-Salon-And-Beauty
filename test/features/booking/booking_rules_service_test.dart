@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../test_helper.dart';
-import 'package:salon_and_beauty/features/booking/domain/booking_rules_service.dart';
+import 'package:salon_and_beauty/Services/BookingRulesService.dart';
 
 void main() {
   setUpAll(() async {
