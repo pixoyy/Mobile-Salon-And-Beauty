@@ -4,9 +4,9 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import 'test_helper.dart';
 import 'test_utils.dart';
 
-import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
-import 'package:salon_and_beauty/features/stylist/presentation/stylist_list_page.dart';
-import 'package:salon_and_beauty/features/stylist/presentation/stylist_detail_page.dart';
+import 'package:salon_and_beauty/Repositories/StylistRepository.dart';
+import 'package:salon_and_beauty/Views/Stylist/StylistDetailPage.dart';
+import 'package:salon_and_beauty/Views/Stylist/StylistListPage.dart';
 
 void main() {
   setUpAll(() async {

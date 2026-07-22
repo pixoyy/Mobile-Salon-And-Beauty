@@ -1,7 +1,7 @@
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
-import 'package:salon_and_beauty/core/data/database_helper.dart';
-import 'package:salon_and_beauty/core/data/seeder.dart';
-import 'package:salon_and_beauty/core/session/auth_session.dart';
+import 'package:salon_and_beauty/Database/DatabaseHelper.dart';
+import 'package:salon_and_beauty/Database/Seeder.dart';
+import 'package:salon_and_beauty/Support/AuthSession.dart';
 
 /// Initialize test environment: use sqflite ffi (in-memory), seed DB, bootstrap session.
 Future<void> initTestEnv() async {

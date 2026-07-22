@@ -8,16 +8,16 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/Controllers/BookingCubit.dart';
+import 'package:salon_and_beauty/Models/UserModel.dart';
+import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
+import 'package:salon_and_beauty/Repositories/ServiceRepository.dart';
+import 'package:salon_and_beauty/Repositories/StylistRepository.dart';
+import 'package:salon_and_beauty/Support/AuthSession.dart';
+import 'package:salon_and_beauty/Views/Shell/AppShell.dart';
+import 'package:salon_and_beauty/app.dart';
 
 import 'test_helper.dart';
-import 'package:salon_and_beauty/core/session/auth_session.dart';
-import 'package:salon_and_beauty/app.dart';
-import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
-import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
-import 'package:salon_and_beauty/features/service/data/service_repository.dart';
-import 'package:salon_and_beauty/features/shell/presentation/app_shell.dart';
-import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
-import 'package:salon_and_beauty/features/user/data/user_model.dart';
 
 void main() {
   setUpAll(() async {
