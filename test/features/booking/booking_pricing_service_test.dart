@@ -1,10 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
 
 import '../../test_helper.dart';
-import 'package:salon_and_beauty/core/data/dummy_discounts.dart';
-import 'package:salon_and_beauty/core/models/discount.dart';
-import 'package:salon_and_beauty/features/booking/domain/booking_pricing_service.dart';
-import 'package:salon_and_beauty/features/service/data/service_model.dart';
+import 'package:salon_and_beauty/Database/DummyData/DummyDiscounts.dart';
+import 'package:salon_and_beauty/Models/DiscountModel.dart';
+import 'package:salon_and_beauty/Models/ServiceModel.dart';
+import 'package:salon_and_beauty/Services/BookingPricingService.dart';
 
 const List<ServiceModel> _activePromoServices = <ServiceModel>[
   ServiceModel(

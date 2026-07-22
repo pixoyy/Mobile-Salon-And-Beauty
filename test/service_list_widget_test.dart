@@ -4,12 +4,12 @@ import 'package:flutter_test/flutter_test.dart';
 import 'test_helper.dart';
 import 'test_utils.dart';
 
-import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
-import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
-import 'package:salon_and_beauty/features/service/data/service_repository.dart';
-import 'package:salon_and_beauty/features/service/presentation/service_list_page.dart';
-import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
-import 'package:salon_and_beauty/features/booking/presentation/booking_schedule_page.dart';
+import 'package:salon_and_beauty/Controllers/BookingCubit.dart';
+import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
+import 'package:salon_and_beauty/Repositories/ServiceRepository.dart';
+import 'package:salon_and_beauty/Repositories/StylistRepository.dart';
+import 'package:salon_and_beauty/Views/Booking/BookingSchedulePage.dart';
+import 'package:salon_and_beauty/Views/Service/ServiceListPage.dart';
 
 Future<void> _pumpServiceListPage(WidgetTester tester) async {
   await tester.pumpWidget(

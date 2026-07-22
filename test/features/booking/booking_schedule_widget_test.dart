@@ -4,13 +4,12 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../../test_helper.dart';
 import '../../test_utils.dart';
 
-import 'package:salon_and_beauty/features/booking/bloc/booking_cubit.dart';
-import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
-import 'package:salon_and_beauty/features/booking/presentation/booking_schedule_page.dart';
-// import 'package:salon_and_beauty/features/stylist/data/dummy_stylists.dart';
-import 'package:salon_and_beauty/features/stylist/data/stylist_repository.dart';
-import 'package:salon_and_beauty/features/service/data/dummy_services.dart';
-import 'package:salon_and_beauty/features/service/data/service_repository.dart';
+import 'package:salon_and_beauty/Controllers/BookingCubit.dart';
+import 'package:salon_and_beauty/Database/DummyData/DummyServices.dart';
+import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
+import 'package:salon_and_beauty/Repositories/ServiceRepository.dart';
+import 'package:salon_and_beauty/Repositories/StylistRepository.dart';
+import 'package:salon_and_beauty/Views/Booking/BookingSchedulePage.dart';
 
 String _formatDateLabel(DateTime date) {
   final String day = date.day.toString().padLeft(2, '0');

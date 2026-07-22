@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 
-import 'bootstrap/app_bootstrap.dart';
-import 'core/session/auth_session.dart';
-import 'core/theme/app_theme.dart';
-import 'features/auth/presentation/login_page.dart';
-import 'features/shell/presentation/app_shell.dart';
+import 'Providers/AppBootstrap.dart';
+import 'Support/AuthSession.dart';
+import 'Theme/AppTheme.dart';
+import 'Views/Auth/LoginPage.dart';
+import 'Views/Shell/AppShell.dart';
 
 class GlamoraApp extends StatefulWidget {
   const GlamoraApp({super.key});
@@ -32,8 +32,8 @@ class _GlamoraAppState extends State<GlamoraApp> {
 
           if (!isReady) {
             return MaterialApp(
-              title: 'Glamora Salon & Beauty',
-              debugShowCheckedModeBanner: false,
+                title: 'Glamora Salon & Beauty',
+                debugShowCheckedModeBanner: false,
               theme: buildAppTheme(),
               home: const _StartupScreen(),
             );

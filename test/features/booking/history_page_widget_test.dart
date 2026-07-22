@@ -3,8 +3,8 @@ import 'package:flutter_test/flutter_test.dart';
 import '../../test_helper.dart';
 import '../../test_utils.dart';
 
-import 'package:salon_and_beauty/features/booking/presentation/history_page.dart';
-import 'package:salon_and_beauty/features/booking/presentation/booking_preview_card.dart';
+import 'package:salon_and_beauty/Views/Booking/BookingPreviewCard.dart';
+import 'package:salon_and_beauty/Views/Booking/HistoryPage.dart';
 
 void main() {
   group('HistoryPage Widget Tests', () {

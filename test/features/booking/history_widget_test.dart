@@ -2,9 +2,9 @@ import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
 import '../../test_helper.dart';
 
-import 'package:salon_and_beauty/features/booking/data/booking_model.dart';
-import 'package:salon_and_beauty/features/booking/data/booking_repository.dart';
-import 'package:salon_and_beauty/features/booking/presentation/history_page.dart';
+import 'package:salon_and_beauty/Models/BookingModel.dart';
+import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
+import 'package:salon_and_beauty/Views/Booking/HistoryPage.dart';
 
 Future<void> _pumpHistoryPage(WidgetTester tester) async {
   await tester.pumpWidget(const MaterialApp(home: HistoryPage()));

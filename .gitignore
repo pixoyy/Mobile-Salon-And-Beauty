@@ -46,3 +46,6 @@ app.*.map.json
 
 # Ignore private docs folder
 /docs/private/
+
+/DOCS
+AGENTS.md
