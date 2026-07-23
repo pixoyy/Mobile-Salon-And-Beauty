@@ -1,36 +1,27 @@
-import 'package:sqflite/sqflite.dart';
-
+import 'package:dio/dio.dart';
 import 'package:salon_and_beauty/Models/DiscountModel.dart';
-import 'package:salon_and_beauty/Database/DatabaseHelper.dart';
-import 'package:salon_and_beauty/Database/DummyData/DummyDiscounts.dart';
+import 'package:salon_and_beauty/core/network/api_client.dart';
 
 class DiscountRepository {
-  static final DiscountRepository _instance = DiscountRepository._internal();
-
-  factory DiscountRepository() {
-    return _instance;
+  Future<List<Discount>> getAllDiscounts() async {
+    final response = await ApiClient().get('/discounts/active');
+    return _parseList(response.data['data']);
   }
 
-  DiscountRepository._internal();
-
-  List<Discount> _cache = List<Discount>.unmodifiable(DummyDiscounts.data);
-
-  Future<List<Discount>> getAllDiscounts() async {
+  Future<Discount?> validateDiscount(String code, int subtotal) async {
     try {
-      final Database db = await DatabaseHelper.instance.database;
-      final List<Map<String, Object?>> rows = await db.query('discounts');
-      if (rows.isEmpty) {
-        _cache = List<Discount>.unmodifiable(DummyDiscounts.data);
-        return _cache;
-      }
-
-      final List<Discount> discounts = rows
-          .map((row) => Discount.fromMap(row))
-          .toList(growable: false);
-      _cache = List<Discount>.unmodifiable(discounts);
-      return _cache;
-    } catch (_) {
-      return _cache;
+      final response = await ApiClient().post('/discounts/validate', data: {
+        'code': code,
+        'subtotal': subtotal,
+      });
+      return Discount.fromJson(response.data['data']);
+    } on DioException catch (e) {
+      if (e.response?.statusCode == 422) return null;
+      rethrow;
     }
+  }
+
+  List<Discount> _parseList(dynamic data) {
+    return (data as List).map((j) => Discount.fromJson(j)).toList();
   }
 }

@@ -1,61 +1,39 @@
-import 'package:salon_and_beauty/Database/DummyData/DummyUser.dart';
 import 'package:salon_and_beauty/Models/UserModel.dart';
-import 'package:salon_and_beauty/Database/DatabaseHelper.dart';
+import 'package:salon_and_beauty/core/network/api_client.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-const String _kActiveUserIdKey = 'auth_active_user_id';
-
 class AuthSession {
-  static UserModel? currentUser;
+  static String? _token;
+  static UserModel? _currentUser;
 
-  static UserModel get activeUser => currentUser ?? DummyUser.activeCustomer;
+  static UserModel? get currentUser => _currentUser;
+  static String? get token => _token;
+  static bool get isLoggedIn => _token != null;
 
-  static String get activeCustomerId => activeUser.id;
-
-  static bool get isLoggedIn => currentUser != null;
-
-  /// Persist current user id to SharedPreferences and set currentUser
-  static Future<void> persistLogin(UserModel user) async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString(_kActiveUserIdKey, user.id);
-    } catch (_) {
-      // ignore persistence errors
-    }
-    currentUser = user;
-  }
-
-  /// Clear persisted session and currentUser
-  static Future<void> clearPersistentSession() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.remove(_kActiveUserIdKey);
-    } catch (_) {
-      // ignore
-    }
-    currentUser = null;
-  }
-
-  /// Non-async logout kept for compatibility; also clears persistent session asynchronously.
-  static void logout() {
-    currentUser = null;
-    clearPersistentSession();
-  }
-
-  /// Bootstrap session from SharedPreferences (call at app start)
   static Future<void> bootstrap() async {
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final storedId = prefs.getString(_kActiveUserIdKey);
-      if (storedId == null || storedId.isEmpty) return;
-
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('users', where: 'id = ?', whereArgs: [storedId]);
-      if (rows.isNotEmpty) {
-        currentUser = UserModel.fromMap(rows.first);
+    final prefs = await SharedPreferences.getInstance();
+    _token = prefs.getString('auth_token');
+    if (_token != null) {
+      try {
+        final response = await ApiClient().get('/auth/me');
+        _currentUser = UserModel.fromJson(response.data['data']);
+      } catch (_) {
+        await clearSession();
       }
-    } catch (_) {
-      // ignore bootstrap errors
     }
+  }
+
+  static Future<void> persistLogin(String token, UserModel user) async {
+    _token = token;
+    _currentUser = user;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString('auth_token', token);
+  }
+
+  static Future<void> clearSession() async {
+    _token = null;
+    _currentUser = null;
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.remove('auth_token');
   }
 }

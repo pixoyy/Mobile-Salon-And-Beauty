@@ -1,103 +1,32 @@
-import 'package:salon_and_beauty/Database/DatabaseHelper.dart';
-import 'package:salon_and_beauty/Database/DummyData/DummyServices.dart';
 import 'package:salon_and_beauty/Models/ServiceModel.dart';
+import 'package:salon_and_beauty/core/network/api_client.dart';
 
 class ServiceRepository {
-  static final ServiceRepository _instance = ServiceRepository._internal();
-
-  factory ServiceRepository() {
-    return _instance;
+  Future<List<ServiceModel>> getAllServices({String? category}) async {
+    final params = <String, dynamic>{};
+    if (category != null) params['category'] = category;
+    final response = await ApiClient().get('/services', params: params);
+    return _parseList(response.data['data']);
   }
 
-  ServiceRepository._internal() {
-    _initializeDummyServices();
+  Future<ServiceModel> getServiceById(String id) async {
+    final response = await ApiClient().get('/services/$id');
+    return ServiceModel.fromJson(response.data['data']);
   }
 
-  final List<ServiceModel> _services = [];
-  bool _isInitialized = false;
-
-  void _initializeDummyServices() {
-    if (_isInitialized) {
-      return;
-    }
-
-    _services.addAll(DummyServices.data);
-    _isInitialized = true;
+  Future<List<ServiceModel>> searchServices(
+    String query, {
+    int? minPrice,
+    int? maxPrice,
+  }) async {
+    final params = <String, dynamic>{'q': query};
+    if (minPrice != null) params['min_price'] = minPrice;
+    if (maxPrice != null) params['max_price'] = maxPrice;
+    final response = await ApiClient().get('/services/search', params: params);
+    return _parseList(response.data['data']);
   }
 
-  Future<List<ServiceModel>> getAllServices() async {
-    _initializeDummyServices();
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('services');
-      if (rows.isEmpty) {
-        return List<ServiceModel>.unmodifiable(_services);
-      }
-
-      final mapped = rows
-          .map((r) => ServiceModel.fromMap(r))
-          .toList(growable: false);
-
-      return List<ServiceModel>.unmodifiable(mapped);
-    } catch (_) {
-      return List<ServiceModel>.unmodifiable(_services);
-    }
-  }
-
-  Future<ServiceModel?> getServiceById(String id) async {
-    _initializeDummyServices();
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('services', where: 'id = ?', whereArgs: [id]);
-      if (rows.isEmpty) {
-        try {
-          return _services.firstWhere((service) => service.id == id);
-        } catch (_) {
-          return null;
-        }
-      }
-
-      return ServiceModel.fromMap(rows.first);
-    } catch (_) {
-      try {
-        return _services.firstWhere((service) => service.id == id);
-      } catch (_) {
-        return null;
-      }
-    }
-  }
-
-  Future<List<ServiceModel>> searchServices(String query) async {
-    _initializeDummyServices();
-
-    final normalizedQuery = query.trim().toLowerCase();
-    if (normalizedQuery.isEmpty) {
-      return List<ServiceModel>.unmodifiable(_services);
-    }
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('services');
-      final mapped = rows
-          .map((r) => ServiceModel.fromMap(r))
-          .toList(growable: false);
-
-      final filteredServices = mapped.where((service) {
-        return service.name.toLowerCase().contains(normalizedQuery) ||
-            service.category.toLowerCase().contains(normalizedQuery) ||
-            service.description.toLowerCase().contains(normalizedQuery);
-      }).toList(growable: false);
-
-      return List<ServiceModel>.unmodifiable(filteredServices);
-    } catch (_) {
-      final filteredServices = _services.where((service) {
-        return service.name.toLowerCase().contains(normalizedQuery) ||
-            service.category.toLowerCase().contains(normalizedQuery) ||
-            service.description.toLowerCase().contains(normalizedQuery);
-      }).toList(growable: false);
-
-      return List<ServiceModel>.unmodifiable(filteredServices);
-    }
+  List<ServiceModel> _parseList(dynamic data) {
+    return (data as List).map((j) => ServiceModel.fromJson(j)).toList();
   }
 }

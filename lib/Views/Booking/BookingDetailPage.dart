@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:salon_and_beauty/Database/DummyData/DummyStylists.dart';
 import 'package:salon_and_beauty/Models/BookingModel.dart';
 import 'package:salon_and_beauty/Models/ServiceModel.dart';
 import 'package:salon_and_beauty/Models/StylistModel.dart';
@@ -32,7 +31,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     final StylistRepository stylistRepository = StylistRepository();
     final ServiceRepository serviceRepository = ServiceRepository();
 
-    final StylistModel? stylist = await stylistRepository.getStylistById(widget.booking.stylistId);
+    final StylistModel stylist = await stylistRepository.getStylistById(widget.booking.stylistId);
     final List<ServiceModel> services = await Future.wait<ServiceModel?>(
       widget.booking.serviceIds.map(serviceRepository.getServiceById),
     ).then(
@@ -40,7 +39,7 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
     );
 
     return _BookingDetailPayload(
-      stylist: stylist ?? DummyStylists.data.first,
+      stylist: stylist,
       services: services,
     );
   }

@@ -488,7 +488,7 @@ class _UserView extends StatelessWidget {
 
             if (shouldLogout != true) return;
 
-            AuthSession.logout();
+            AuthSession.clearSession();
 
             if (context.mounted) {
               Navigator.pushAndRemoveUntil(

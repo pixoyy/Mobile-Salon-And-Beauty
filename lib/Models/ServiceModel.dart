@@ -49,6 +49,18 @@ class ServiceModel {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'description': description,
+      'duration_minutes': durationMinutes,
+      'price': price,
+      'is_popular': isPopular,
+    };
+  }
+
   factory ServiceModel.fromMap(Map<String, dynamic> map) {
     return ServiceModel(
       id: map['id']?.toString() ?? '',
@@ -58,6 +70,18 @@ class ServiceModel {
       durationMinutes: _toInt(map['durationMinutes']),
       price: _toInt(map['price']),
       isPopular: _toBool(map['isPopular']),
+    );
+  }
+
+  factory ServiceModel.fromJson(Map<String, dynamic> json) {
+    return ServiceModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      category: json['category']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      durationMinutes: _toInt(json['duration_minutes']),
+      price: _toInt(json['price']),
+      isPopular: _toBool(json['is_popular']),
     );
   }
 

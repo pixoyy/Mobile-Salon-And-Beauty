@@ -51,19 +51,17 @@ class UserCubit extends Cubit<UserState> {
     required String name,
     required String email,
     required String phone,
+    String? avatarPath,
   }) async {
     try {
       emit(UserLoading());
 
-      final currentUser = await repository.getProfile();
-
-      final updatedUser = currentUser.copyWith(
+      final result = await repository.updateProfile(
         name: name,
         email: email,
         phone: phone,
+        avatarPath: avatarPath,
       );
-
-      final result = await repository.updateProfile(updatedUser);
 
       emit(UserLoaded(result));
     } catch (e) {

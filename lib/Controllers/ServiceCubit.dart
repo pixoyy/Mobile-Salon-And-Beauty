@@ -76,7 +76,7 @@ class ServiceListCubit extends Cubit<ServiceListState> {
     }
   }
 
-  Future<void> searchServices(String query) async {
+  Future<void> searchServices(String query, {int? minPrice, int? maxPrice}) async {
     final normalizedQuery = query.trim();
 
     try {
@@ -97,7 +97,7 @@ class ServiceListCubit extends Cubit<ServiceListState> {
             .toList();
       } else {
         // Search query only (no category): use repository search
-        services = await _repository.searchServices(normalizedQuery);
+        services = await _repository.searchServices(normalizedQuery, minPrice: minPrice, maxPrice: maxPrice);
       }
       emit(state.copyWith(
         status: ServiceStatus.success,

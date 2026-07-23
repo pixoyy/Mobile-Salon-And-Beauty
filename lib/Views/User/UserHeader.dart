@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:salon_and_beauty/Support/ProfileImageHelper.dart';
+import 'package:salon_and_beauty/Support/AuthSession.dart';
 
 class UserHeader extends StatelessWidget {
   final String name;
@@ -17,7 +17,7 @@ class UserHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final avatarImage = profileImageProvider(imageUrl);
+    final avatarImage = imageUrl != null ? NetworkImage(imageUrl!) : null;
 
     return Container(
       width: double.infinity,

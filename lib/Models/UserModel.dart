@@ -4,7 +4,7 @@ class UserModel {
     required this.name,
     required this.email,
     required this.phone,
-    required this.password,
+    this.password,
     this.imageUrl,
   });
 
@@ -12,7 +12,7 @@ class UserModel {
   final String name;
   final String email;
   final String phone;
-  final String password;
+  final String? password;
 
   final String? imageUrl;
 
@@ -20,8 +20,8 @@ class UserModel {
     String? id,
     String? name,
     String? email,
-    String? password,
     String? phone,
+    String? password,
     String? imageUrl,
   }) {
     return UserModel(
@@ -45,6 +45,16 @@ class UserModel {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'email': email,
+      'phone': phone,
+      'image_url': imageUrl,
+    };
+  }
+
   static UserModel fromMap(Map<String, dynamic> m) {
     return UserModel(
       id: m['id']?.toString() ?? '',
@@ -53,6 +63,17 @@ class UserModel {
       phone: m['phone']?.toString() ?? '',
       password: m['password']?.toString() ?? '',
       imageUrl: m['imageUrl']?.toString(),
+    );
+  }
+
+  factory UserModel.fromJson(Map<String, dynamic> json) {
+    return UserModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      email: json['email']?.toString() ?? '',
+      phone: json['phone']?.toString() ?? '',
+      password: json['password']?.toString(),
+      imageUrl: json['image_url']?.toString(),
     );
   }
 }
