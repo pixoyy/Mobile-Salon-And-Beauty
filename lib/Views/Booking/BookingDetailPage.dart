@@ -138,17 +138,6 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
         return Scaffold(
           appBar: AppBar(
             title: const Text('Detail Booking'),
-            actions: [
-              IconButton(
-                tooltip: 'Share booking',
-                onPressed: () {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(content: Text('Berbagi booking akan hadir di phase berikutnya.')),
-                  );
-                },
-                icon: const Icon(Icons.ios_share_outlined),
-              ),
-            ],
           ),
           body: SafeArea(
             child: ListView(
