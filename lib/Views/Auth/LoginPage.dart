@@ -169,6 +169,30 @@ class _LoginViewState extends State<_LoginView> {
                                       return null;
                                     },
                                   ),
+                                  if (state.status == AuthStatus.failure && state.errorMessage != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 10),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                                        decoration: BoxDecoration(
+                                          color: Colors.red.shade50,
+                                          borderRadius: BorderRadius.circular(12),
+                                          border: Border.all(color: Colors.red.shade200),
+                                        ),
+                                        child: Row(
+                                          children: [
+                                            Icon(Icons.error_outline, color: Colors.red.shade700, size: 20),
+                                            const SizedBox(width: 10),
+                                            Expanded(
+                                              child: Text(
+                                                state.errorMessage!,
+                                                style: TextStyle(color: Colors.red.shade700, fontSize: 13),
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
                                   const SizedBox(height: 24),
                                   ElevatedButton(
                                     onPressed: state.status == AuthStatus.loading
@@ -203,7 +227,7 @@ class _LoginViewState extends State<_LoginView> {
                         ),
                         const SizedBox(height: 16),
                         Text(
-                          AuthRepository().demoCredentialHint,
+                          'Demo: user@gmail.com / test123',
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: AppColors.mutedText,

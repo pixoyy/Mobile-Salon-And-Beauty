@@ -11,7 +11,7 @@ class AuthRepository {
     required String password,
   }) async {
     try {
-      final response = await ApiClient().post('/auth/login', data: {
+      final response = await ApiClient().post('/login', data: {
         'identifier': identifier,
         'password': password,
       });
@@ -45,7 +45,7 @@ class AuthRepository {
     }
 
     try {
-      await ApiClient().post('/auth/register', data: {
+      await ApiClient().post('/register', data: {
         'name': name,
         'email': email,
         'phone': phone,
@@ -66,7 +66,7 @@ class AuthRepository {
 
   Future<void> logout() async {
     try {
-      await ApiClient().post('/auth/logout');
+      await ApiClient().post('/logout');
     } catch (_) {}
     await AuthSession.clearSession();
   }

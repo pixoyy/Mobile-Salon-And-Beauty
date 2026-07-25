@@ -68,6 +68,10 @@ class Discount {
   static int _toInt(dynamic value) {
     if (value is int) return value;
     if (value is double) return value.round();
+    if (value is String) {
+      final d = double.tryParse(value);
+      if (d != null) return d.round();
+    }
     return int.tryParse(value?.toString() ?? '') ?? 0;
   }
 

@@ -98,7 +98,7 @@ class _AuthInterceptor extends Interceptor {
 
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    if (err.response?.statusCode == 401) {
+    if (err.response?.statusCode == 401 && err.requestOptions.path != '/login') {
       _redirectToLogin();
     }
     handler.next(err);

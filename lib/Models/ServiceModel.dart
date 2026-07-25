@@ -88,7 +88,9 @@ class ServiceModel {
   static int _toInt(dynamic value) {
     if (value is int) return value;
     if (value is double) return value.round();
-    return int.tryParse(value?.toString() ?? '') ?? 0;
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed != null) return parsed.round();
+    return 0;
   }
 
   static bool _toBool(dynamic value) {

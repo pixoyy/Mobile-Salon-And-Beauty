@@ -7,6 +7,7 @@ class AuthSession {
   static UserModel? _currentUser;
 
   static UserModel? get currentUser => _currentUser;
+  static set currentUser(UserModel? user) => _currentUser = user;
   static String? get token => _token;
   static bool get isLoggedIn => _token != null;
 
@@ -15,7 +16,7 @@ class AuthSession {
     _token = prefs.getString('auth_token');
     if (_token != null) {
       try {
-        final response = await ApiClient().get('/auth/me');
+        final response = await ApiClient().get('/me');
         _currentUser = UserModel.fromJson(response.data['data']);
       } catch (_) {
         await clearSession();

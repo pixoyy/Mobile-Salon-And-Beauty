@@ -16,23 +16,26 @@ class UserRepository {
     String? avatarPath,
   }) async {
     final formData = FormData.fromMap({
+      '_method': 'PUT',
       'name': name,
       'email': email,
       'phone': phone,
       if (avatarPath != null)
         'avatar': await MultipartFile.fromFile(avatarPath),
     });
-    final response = await ApiClient().put('/user/profile', data: formData);
+    final response = await ApiClient().post('/user/profile', data: formData);
     return UserModel.fromJson(response.data['data']);
   }
 
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
+    required String newPasswordConfirmation,
   }) async {
     await ApiClient().post('/user/change-password', data: {
       'old_password': oldPassword,
       'new_password': newPassword,
+      'new_password_confirmation': newPasswordConfirmation,
     });
   }
 }

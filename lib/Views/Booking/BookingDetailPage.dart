@@ -71,8 +71,8 @@ class _BookingDetailPageState extends State<BookingDetailPage> {
 
     setState(() => _isProcessing = true);
     try {
+      await _bookingRepository.cancelBooking(widget.booking.id);
       final BookingModel updated = widget.booking.copyWith(status: BookingStatus.cancelled);
-      await _bookingRepository.updateBooking(widget.booking.id, updated);
       if (!mounted) {
         return;
       }

@@ -5,6 +5,7 @@ import 'package:salon_and_beauty/Models/BookingModel.dart';
 import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
 import 'package:salon_and_beauty/Models/PaymentModel.dart';
 import 'package:salon_and_beauty/Services/BookingRulesService.dart';
+import 'package:salon_and_beauty/Services/BookingPricingService.dart';
 import 'package:salon_and_beauty/Models/DiscountModel.dart';
 import 'package:salon_and_beauty/Repositories/DiscountRepository.dart';
 import 'package:salon_and_beauty/Support/AuthSession.dart';
@@ -215,20 +216,11 @@ class BookingCubit extends Cubit<BookingState> {
       return;
     }
 
-    final String dateStr = _toIsoDate(_scheduleState.selectedDate!);
-    final bool isAvailable = await _bookingRepository.checkAvailability(
-      stylistId,
-      dateStr,
-      time,
-      serviceIds,
-    );
-
-    if (!isAvailable) {
+    if (!_scheduleState.availableSlots.contains(time)) {
       emit(BookingError(
         message: 'Jam yang dipilih belum tersedia. Silakan pilih jam lain.',
         scheduleState: _scheduleState,
       ));
-      await loadAvailableSlots(stylistId, _scheduleState.selectedDate!);
       return;
     }
 
@@ -295,8 +287,15 @@ class BookingCubit extends Cubit<BookingState> {
 
     try {
       final services = await _resolveSelectedServices(_scheduleState.selectedServiceIds);
-      final subtotal = services.fold<int>(0, (sum, s) => sum + s.price);
-      final payment = PaymentModel.fromSubtotal(subtotal: subtotal);
+
+      final discounts = await _discountRepository.getAllDiscounts();
+      final result = await BookingPricingService.calculate(
+        services: services,
+        bookingDate: _scheduleState.selectedDate ?? DateTime.now(),
+        discounts: discounts,
+      );
+      final payment = result.payment;
+      final String? discountCode = result.appliedDiscount?.code;
 
       final String dateStr = _toIsoDate(_scheduleState.selectedDate!);
 
@@ -309,12 +308,14 @@ class BookingCubit extends Cubit<BookingState> {
         subtotal: payment.subtotal,
         discountAmount: payment.discountAmount,
         totalPrice: payment.totalPrice,
+        discountCode: discountCode,
       );
 
       emit(BookingSuccess(
         booking: savedBooking,
         payment: payment,
         scheduleState: _scheduleState,
+        appliedDiscount: result.appliedDiscount,
       ));
 
       _scheduleState = const BookingScheduleState.initial();
@@ -338,14 +339,30 @@ class BookingCubit extends Cubit<BookingState> {
       _scheduleState.selectedServiceIds,
     );
 
-    final subtotal = selectedServices.fold<int>(0, (sum, s) => sum + s.price);
-    final payment = PaymentModel.fromSubtotal(subtotal: subtotal);
+    try {
+      final discounts = await _discountRepository.getAllDiscounts();
+      final result = await BookingPricingService.calculate(
+        services: selectedServices,
+        bookingDate: _scheduleState.selectedDate ?? DateTime.now(),
+        discounts: discounts,
+      );
 
-    return BookingCheckoutSnapshot(
-      scheduleState: _scheduleState,
-      selectedServices: selectedServices,
-      payment: payment,
-    );
+      return BookingCheckoutSnapshot(
+        scheduleState: _scheduleState,
+        selectedServices: selectedServices,
+        payment: result.payment,
+        appliedDiscount: result.appliedDiscount,
+      );
+    } catch (_) {
+      final subtotal = selectedServices.fold<int>(0, (sum, s) => sum + s.price);
+      final payment = PaymentModel.fromSubtotal(subtotal: subtotal);
+
+      return BookingCheckoutSnapshot(
+        scheduleState: _scheduleState,
+        selectedServices: selectedServices,
+        payment: payment,
+      );
+    }
   }
 
   Future<List<ServiceModel>> _resolveSelectedServices(List<String> serviceIds) async {

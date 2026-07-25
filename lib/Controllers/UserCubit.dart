@@ -72,6 +72,7 @@ class UserCubit extends Cubit<UserState> {
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
+    required String newPasswordConfirmation,
   }) async {
     try {
       emit(ChangePasswordLoading());
@@ -79,6 +80,7 @@ class UserCubit extends Cubit<UserState> {
       await repository.changePassword(
         oldPassword: oldPassword,
         newPassword: newPassword,
+        newPasswordConfirmation: newPasswordConfirmation,
       );
 
       emit(ChangePasswordSuccess());

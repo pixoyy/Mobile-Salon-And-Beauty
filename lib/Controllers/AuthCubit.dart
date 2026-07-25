@@ -46,28 +46,37 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     emit(const AuthState(status: AuthStatus.loading));
 
-    final LoginResult result = await _repository.validateLogin(
-      identifier: identifier,
-      password: password,
-    );
+    try {
+      final LoginResult result = await _repository.validateLogin(
+        identifier: identifier,
+        password: password,
+      );
 
-    if (result.isSuccess) {
-      await AuthSession.persistLogin(result.token!, result.user!);
+      if (result.isSuccess) {
+        await AuthSession.persistLogin(result.token!, result.user!);
+        emit(
+          AuthState(
+            status: AuthStatus.authenticated,
+            currentUser: result.user,
+          ),
+        );
+        return;
+      }
+
       emit(
         AuthState(
-          status: AuthStatus.authenticated,
-          currentUser: result.user,
+          status: AuthStatus.failure,
+          errorMessage: result.error ?? 'Email/username atau password tidak valid.',
         ),
       );
-      return;
+    } catch (e) {
+      emit(
+        AuthState(
+          status: AuthStatus.failure,
+          errorMessage: 'Terjadi kesalahan. Silakan coba lagi.',
+        ),
+      );
     }
-
-    emit(
-      AuthState(
-        status: AuthStatus.failure,
-        errorMessage: result.error ?? 'Email/username atau password tidak valid.',
-      ),
-    );
   }
 
   Future<void> logout() async {

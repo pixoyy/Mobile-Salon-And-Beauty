@@ -29,8 +29,9 @@ class BookingRepository {
     required int subtotal,
     int discountAmount = 0,
     required int totalPrice,
+    String? discountCode,
   }) async {
-    final response = await ApiClient().post('/bookings', data: {
+    final data = <String, dynamic>{
       'stylist_id': stylistId,
       'service_ids': serviceIds,
       'booking_date': bookingDate,
@@ -39,7 +40,11 @@ class BookingRepository {
       'subtotal': subtotal,
       'discount_amount': discountAmount,
       'total_price': totalPrice,
-    });
+    };
+    if (discountCode != null) {
+      data['discount_code'] = discountCode;
+    }
+    final response = await ApiClient().post('/bookings', data: data);
     return BookingModel.fromJson(response.data['data']);
   }
 
@@ -87,7 +92,12 @@ class BookingRepository {
       params['service_ids[]'] = serviceIds;
     }
     final response = await ApiClient().get('/bookings/available-slots', params: params);
-    return (response.data['data'] as List).map((e) => e.toString()).toList();
+    final data = response.data['data'] as Map<String, dynamic>;
+    final slots = data['slots'] as List;
+    return slots
+        .where((e) => (e as Map<String, dynamic>)['available'] == true)
+        .map((e) => e['time'] as String)
+        .toList();
   }
 
   Future<bool> checkAvailability(
@@ -102,7 +112,8 @@ class BookingRepository {
       'time': time,
       'service_ids[]': serviceIds,
     });
-    return response.data['data'] == true;
+    final data = response.data['data'] as Map<String, dynamic>;
+    return data['available'] == true;
   }
 
   List<BookingModel> _parseList(dynamic data) {

@@ -67,9 +67,8 @@ class PaymentModel {
     if (value is num) {
       return value.toInt();
     }
-    if (value is String) {
-      return int.tryParse(value) ?? 0;
-    }
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed != null) return parsed.round();
     return 0;
   }
 

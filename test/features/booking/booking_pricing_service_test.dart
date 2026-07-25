@@ -75,7 +75,7 @@ void main() {
   });
   test('applies the active promo when min spend is met and cap is respected', () async {
     final PricingResult result = await BookingPricingService.calculate(
-      _activePromoServices,
+      services: _activePromoServices,
       bookingDate: DateTime(2026, 5, 20),
       discounts: DummyDiscounts.data,
     );
@@ -88,7 +88,7 @@ void main() {
 
   test('does not apply promo when minimum spend is not reached', () async {
     final PricingResult result = await BookingPricingService.calculate(
-      _smallSpendServices,
+      services: _smallSpendServices,
       bookingDate: DateTime(2026, 5, 20),
       discounts: DummyDiscounts.data,
     );
@@ -131,7 +131,7 @@ void main() {
     ];
 
     final PricingResult result = await BookingPricingService.calculate(
-      const <ServiceModel>[
+      services: const <ServiceModel>[
         ServiceModel(
           id: 'svc-close-1',
           name: 'Close Selection',
@@ -164,7 +164,7 @@ void main() {
     );
 
     final PricingResult result = await BookingPricingService.calculate(
-      const <ServiceModel>[
+      services: const <ServiceModel>[
         ServiceModel(
           id: 'svc-cap-1',
           name: 'Cap Service',
@@ -187,7 +187,7 @@ void main() {
 
   test('does not apply promo when no discount reaches minimum spend', () async {
     final PricingResult result = await BookingPricingService.calculate(
-      _noPromoServices,
+      services: _noPromoServices,
       bookingDate: DateTime(2026, 12, 20),
       discounts: DummyDiscounts.data,
     );
