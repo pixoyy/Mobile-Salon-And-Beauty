@@ -29,6 +29,7 @@ class AuthRepository {
     required String name,
     required String email,
     required String password,
+    required String passwordConfirmation,
     required String phone,
   }) async {
     if (name.trim().isEmpty) {
@@ -50,6 +51,7 @@ class AuthRepository {
         'email': email,
         'phone': phone,
         'password': password,
+        'password_confirmation': passwordConfirmation,
       });
       return RegisterResult.success();
     } on DioException catch (e) {
@@ -57,10 +59,27 @@ class AuthRepository {
       final message = data?['message'] as String? ?? 'Registrasi gagal';
       final errors = data?['errors'] as Map<String, dynamic>?;
       if (errors != null) {
-        final messages = errors.values.expand((e) => e is List ? e : [e]).join('\n');
-        return RegisterResult.failure(messages);
+        final fieldErrors = <String, String>{};
+        for (final entry in errors.entries) {
+          final normalizedKey = _normalizeRegisterField(entry.key);
+          final value = entry.value;
+          final messages = value is List ? value.map((item) => item.toString()) : [value.toString()];
+          fieldErrors[normalizedKey] = messages.join('\n');
+        }
+
+        final messages = fieldErrors.values.join('\n');
+        return RegisterResult.failure(messages, fieldErrors: fieldErrors);
       }
       return RegisterResult.failure(message);
+    }
+  }
+
+  String _normalizeRegisterField(String key) {
+    switch (key) {
+      case 'password_confirmation':
+        return 'passwordConfirmation';
+      default:
+        return key;
     }
   }
 

@@ -57,6 +57,7 @@ class _RegisterViewState extends State<_RegisterView> {
           email: _emailController.text,
           phone: _phoneController.text,
           password: _passwordController.text,
+          passwordConfirmation: _confirmPasswordController.text,
         );
   }
 
@@ -137,6 +138,17 @@ class _RegisterViewState extends State<_RegisterView> {
                                 return null;
                               },
                             ),
+                                  if (state.fieldErrors['name'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        state.fieldErrors['name']!,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _emailController,
@@ -157,6 +169,17 @@ class _RegisterViewState extends State<_RegisterView> {
                                 return null;
                               },
                             ),
+                                  if (state.fieldErrors['email'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        state.fieldErrors['email']!,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _phoneController,
@@ -183,6 +206,17 @@ class _RegisterViewState extends State<_RegisterView> {
                                 return null;
                               },
                             ),
+                                  if (state.fieldErrors['phone'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        state.fieldErrors['phone']!,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _passwordController,
@@ -210,6 +244,17 @@ class _RegisterViewState extends State<_RegisterView> {
                                 return null;
                               },
                             ),
+                                  if (state.fieldErrors['password'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        state.fieldErrors['password']!,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                             const SizedBox(height: 16),
                             TextFormField(
                               controller: _confirmPasswordController,
@@ -240,6 +285,17 @@ class _RegisterViewState extends State<_RegisterView> {
                                 return null;
                               },
                             ),
+                                  if (state.fieldErrors['passwordConfirmation'] != null)
+                                    Padding(
+                                      padding: const EdgeInsets.only(top: 6),
+                                      child: Text(
+                                        state.fieldErrors['passwordConfirmation']!,
+                                        style: TextStyle(
+                                          color: Theme.of(context).colorScheme.error,
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ),
                             const SizedBox(height: 24),
                             ElevatedButton(
                               onPressed: state.status == RegisterStatus.loading ? null : _submit,
