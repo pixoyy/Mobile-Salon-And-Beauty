@@ -121,6 +121,7 @@ class _ChangePasswordPageState
     context.read<UserCubit>().changePassword(
           oldPassword: oldPassword,
           newPassword: newPassword,
+          newPasswordConfirmation: confirmPassword,
         );
   }
 

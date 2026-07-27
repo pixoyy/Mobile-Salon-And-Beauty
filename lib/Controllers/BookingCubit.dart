@@ -1,14 +1,13 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salon_and_beauty/Models/ServiceModel.dart';
 import 'package:salon_and_beauty/Repositories/ServiceRepository.dart';
 import 'package:salon_and_beauty/Models/BookingModel.dart';
 import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
 import 'package:salon_and_beauty/Models/PaymentModel.dart';
-import 'package:salon_and_beauty/Services/BookingAvailabilityService.dart';
 import 'package:salon_and_beauty/Services/BookingRulesService.dart';
 import 'package:salon_and_beauty/Services/BookingPricingService.dart';
 import 'package:salon_and_beauty/Models/DiscountModel.dart';
+import 'package:salon_and_beauty/Repositories/DiscountRepository.dart';
 import 'package:salon_and_beauty/Support/AuthSession.dart';
 
 abstract class BookingState {
@@ -151,14 +150,16 @@ class BookingError extends BookingState {
 }
 
 class BookingCubit extends Cubit<BookingState> {
-  BookingCubit(this._bookingRepository, this._serviceRepository)
-      : _scheduleState = const BookingScheduleState.initial(),
+  BookingCubit(
+    this._bookingRepository,
+    this._serviceRepository,
+    this._discountRepository,
+  )   : _scheduleState = const BookingScheduleState.initial(),
         super(const BookingInitial());
 
   final BookingRepository _bookingRepository;
   final ServiceRepository _serviceRepository;
-
-  static String get _activeCustomerId => AuthSession.activeCustomerId;
+  final DiscountRepository _discountRepository;
 
   BookingScheduleState _scheduleState;
 
@@ -186,12 +187,9 @@ class BookingCubit extends Cubit<BookingState> {
     );
 
     emit(_scheduleState);
-    // When selected services change, total duration may change -> recheck available slots
-    // Fire-and-forget loadAvailableSlots so UI updates availability in background.
     final String? stylistId = _scheduleState.selectedStylistId;
     final DateTime? date = _scheduleState.selectedDate;
     if (stylistId != null && date != null) {
-      // trigger availability reload in background
       loadAvailableSlots(stylistId, date);
     }
   }
@@ -206,52 +204,27 @@ class BookingCubit extends Cubit<BookingState> {
   }
 
   Future<void> selectDateTime(DateTime date, String time) async {
-    final String? normalizedTime = BookingAvailabilityService.normalizeTime(time);
-    if (normalizedTime == null) {
-      emit(BookingError(
-        message: 'Format jam tidak valid. Gunakan format HH:mm.',
-        scheduleState: _scheduleState,
-      ));
-      emit(_scheduleState);
-      return;
-    }
-
     _scheduleState = _scheduleState.copyWith(
       selectedDate: DateTime(date.year, date.month, date.day),
     );
 
     final String? stylistId = _scheduleState.selectedStylistId;
-    if (stylistId == null) {
+    final List<String> serviceIds = _scheduleState.selectedServiceIds;
+    if (stylistId == null || serviceIds.isEmpty) {
       _scheduleState = _scheduleState.copyWith(clearSelectedTime: true);
       emit(_scheduleState);
       return;
     }
 
-    final int selectedDurationMinutes = await _selectedServicesDurationMinutes();
-    final bool isAvailable = await _bookingRepository.checkAvailability(
-      stylistId,
-      _scheduleState.selectedDate!,
-      normalizedTime,
-      durationMinutes: selectedDurationMinutes,
-    );
-
-    if (!isAvailable) {
-      final String fallbackMessage = await _bookingRepository.getAvailabilityMessage(
-        stylistId,
-        _scheduleState.selectedDate!,
-        normalizedTime,
-        durationMinutes: selectedDurationMinutes,
-          ) ??
-          'Jam yang dipilih belum tersedia. Silakan pilih jam lain.';
+    if (!_scheduleState.availableSlots.contains(time)) {
       emit(BookingError(
-        message: fallbackMessage,
+        message: 'Jam yang dipilih belum tersedia. Silakan pilih jam lain.',
         scheduleState: _scheduleState,
       ));
-      await loadAvailableSlots(stylistId, _scheduleState.selectedDate!);
       return;
     }
 
-    _scheduleState = _scheduleState.copyWith(selectedTime: normalizedTime);
+    _scheduleState = _scheduleState.copyWith(selectedTime: time);
     emit(_scheduleState);
   }
 
@@ -269,19 +242,12 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading(previousState: _scheduleState));
 
     try {
-      if (kDebugMode) {
-        // ignore: avoid_print
-        debugPrint('DBG: BookingCubit.loadAvailableSlots: start for $stylistId ${date.toIso8601String()}');
-      }
-      final List<String> slots = await _bookingRepository.getAvailableSlotsForStylist(
+      final String dateStr = _toIsoDate(_scheduleState.selectedDate!);
+      final List<String> slots = await _bookingRepository.getAvailableSlots(
         stylistId,
-        _scheduleState.selectedDate!,
-        durationMinutes: await _selectedServicesDurationMinutes(),
+        dateStr,
+        serviceIds: _scheduleState.selectedServiceIds,
       );
-      if (kDebugMode) {
-        // ignore: avoid_print
-        debugPrint('DBG: BookingCubit.loadAvailableSlots: got ${slots.length} slots');
-      }
 
       final bool hasCurrentTime =
           _scheduleState.selectedTime != null && slots.contains(_scheduleState.selectedTime);
@@ -320,40 +286,39 @@ class BookingCubit extends Cubit<BookingState> {
     emit(BookingLoading(previousState: _scheduleState));
 
     try {
-      final PricingResult pricing = await _calculatePayment(_scheduleState.selectedServiceIds);
-      final PaymentModel payment = pricing.payment;
+      final services = await _resolveSelectedServices(_scheduleState.selectedServiceIds);
 
-      final BookingModel draftBooking = BookingModel(
-        id: '',
-        customerId: _activeCustomerId,
+      final discounts = await _discountRepository.getAllDiscounts();
+      final result = await BookingPricingService.calculate(
+        services: services,
+        bookingDate: _scheduleState.selectedDate ?? DateTime.now(),
+        discounts: discounts,
+      );
+      final payment = result.payment;
+      final String? discountCode = result.appliedDiscount?.code;
+
+      final String dateStr = _toIsoDate(_scheduleState.selectedDate!);
+
+      final BookingModel savedBooking = await _bookingRepository.createBooking(
         stylistId: _scheduleState.selectedStylistId!,
         serviceIds: _scheduleState.selectedServiceIds,
-        bookingDate: _scheduleState.selectedDate!,
+        bookingDate: dateStr,
         bookingTime: _scheduleState.selectedTime!,
         notes: _scheduleState.notes.trim().isEmpty ? null : _scheduleState.notes.trim(),
         subtotal: payment.subtotal,
-        discount: payment.discountAmount,
+        discountAmount: payment.discountAmount,
         totalPrice: payment.totalPrice,
-        status: BookingStatus.upcoming,
-        createdAt: DateTime.now(),
+        discountCode: discountCode,
       );
-
-      final BookingModel savedBooking = await _bookingRepository.createBooking(draftBooking);
 
       emit(BookingSuccess(
         booking: savedBooking,
         payment: payment,
         scheduleState: _scheduleState,
-        appliedDiscount: pricing.appliedDiscount,
+        appliedDiscount: result.appliedDiscount,
       ));
 
       _scheduleState = const BookingScheduleState.initial();
-      emit(_scheduleState);
-    } on StateError catch (error) {
-      emit(BookingError(
-        message: error.message,
-        scheduleState: _scheduleState,
-      ));
       emit(_scheduleState);
     } catch (_) {
       emit(BookingError(
@@ -369,33 +334,35 @@ class BookingCubit extends Cubit<BookingState> {
     emit(_scheduleState);
   }
 
-  Future<PricingResult> _calculatePayment(List<String> serviceIds) async {
-    final List<ServiceModel> resolved = await _resolveSelectedServices(serviceIds);
-
-    final PricingResult result = await BookingPricingService.calculate(
-      resolved,
-      bookingDate: _scheduleState.selectedDate,
-    );
-
-    return result;
-  }
-
   Future<BookingCheckoutSnapshot> buildCheckoutSnapshot() async {
     final List<ServiceModel> selectedServices = await _resolveSelectedServices(
       _scheduleState.selectedServiceIds,
     );
 
-    final PricingResult pricing = await BookingPricingService.calculate(
-      selectedServices,
-      bookingDate: _scheduleState.selectedDate,
-    );
+    try {
+      final discounts = await _discountRepository.getAllDiscounts();
+      final result = await BookingPricingService.calculate(
+        services: selectedServices,
+        bookingDate: _scheduleState.selectedDate ?? DateTime.now(),
+        discounts: discounts,
+      );
 
-    return BookingCheckoutSnapshot(
-      scheduleState: _scheduleState,
-      selectedServices: selectedServices,
-      payment: pricing.payment,
-      appliedDiscount: pricing.appliedDiscount,
-    );
+      return BookingCheckoutSnapshot(
+        scheduleState: _scheduleState,
+        selectedServices: selectedServices,
+        payment: result.payment,
+        appliedDiscount: result.appliedDiscount,
+      );
+    } catch (_) {
+      final subtotal = selectedServices.fold<int>(0, (sum, s) => sum + s.price);
+      final payment = PaymentModel.fromSubtotal(subtotal: subtotal);
+
+      return BookingCheckoutSnapshot(
+        scheduleState: _scheduleState,
+        selectedServices: selectedServices,
+        payment: payment,
+      );
+    }
   }
 
   Future<List<ServiceModel>> _resolveSelectedServices(List<String> serviceIds) async {
@@ -419,5 +386,9 @@ class BookingCubit extends Cubit<BookingState> {
     final List<ServiceModel?> services = await Future.wait(requests);
 
     return BookingRulesService.totalDurationMinutes(services.whereType<ServiceModel>());
+  }
+
+  String _toIsoDate(DateTime date) {
+    return '${date.year.toString().padLeft(4, '0')}-${date.month.toString().padLeft(2, '0')}-${date.day.toString().padLeft(2, '0')}';
   }
 }

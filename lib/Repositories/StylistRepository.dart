@@ -1,105 +1,30 @@
-import 'package:salon_and_beauty/Database/DatabaseHelper.dart';
-import 'package:salon_and_beauty/Database/DummyData/DummyStylists.dart';
 import 'package:salon_and_beauty/Models/StylistModel.dart';
+import 'package:salon_and_beauty/core/network/api_client.dart';
 
 class StylistRepository {
-  factory StylistRepository() {
-    _instance ??= StylistRepository._internal();
-    return _instance!;
+  Future<List<StylistModel>> getAllStylists({String? specialization}) async {
+    final params = <String, dynamic>{};
+    if (specialization != null) params['specialization'] = specialization;
+    final response = await ApiClient().get('/stylists', params: params);
+    return _parseList(response.data['data']);
   }
 
-  StylistRepository._internal() {
-    _initializeDummyStylists();
+  Future<StylistModel> getStylistById(String id) async {
+    final response = await ApiClient().get('/stylists/$id');
+    return StylistModel.fromJson(response.data['data']);
   }
 
-  static StylistRepository? _instance;
-
-  final List<StylistModel> _stylists = <StylistModel>[];
-
-  void _initializeDummyStylists() {
-    if (_stylists.isNotEmpty) {
-      return;
-    }
-
-    _stylists.addAll(DummyStylists.data);
+  Future<List<StylistModel>> searchStylists(
+    String query, {
+    double? minRating,
+  }) async {
+    final params = <String, dynamic>{'q': query};
+    if (minRating != null) params['min_rating'] = minRating;
+    final response = await ApiClient().get('/stylists/search', params: params);
+    return _parseList(response.data['data']);
   }
 
-  Future<List<StylistModel>> getAllStylists() async {
-    await Future<void>.delayed(const Duration(milliseconds: 220));
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('stylists');
-      if (rows.isEmpty) {
-        return List<StylistModel>.from(_stylists);
-      }
-
-      return rows
-          .map((r) => StylistModel.fromMap(r))
-          .toList(growable: false);
-    } catch (_) {
-      return List<StylistModel>.from(_stylists);
-    }
-  }
-
-  Future<StylistModel?> getStylistById(String id) async {
-    await Future<void>.delayed(const Duration(milliseconds: 180));
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('stylists', where: 'id = ?', whereArgs: [id]);
-      if (rows.isEmpty) {
-        try {
-          return _stylists.firstWhere((s) => s.id == id);
-        } catch (_) {
-          return null;
-        }
-      }
-
-      return StylistModel.fromMap(rows.first);
-    } catch (_) {
-      try {
-        return _stylists.firstWhere((s) => s.id == id);
-      } catch (_) {
-        return null;
-      }
-    }
-  }
-
-  Future<List<StylistModel>> searchStylists(String query) async {
-    final normalizedQuery = query.trim().toLowerCase();
-
-    if (normalizedQuery.isEmpty) {
-      return getAllStylists();
-    }
-    await Future<void>.delayed(const Duration(milliseconds: 180));
-
-    try {
-      final db = await DatabaseHelper.instance.database;
-      final rows = await db.query('stylists');
-      final List<StylistModel> all = rows
-          .map((r) => StylistModel.fromMap(r))
-          .toList(growable: false);
-
-      return all.where((stylist) {
-        final name = stylist.name.toLowerCase();
-        final specialization = stylist.specialization.toLowerCase();
-        final skills = stylist.skills.join(' ').toLowerCase();
-
-        return name.contains(normalizedQuery) ||
-            specialization.contains(normalizedQuery) ||
-            skills.contains(normalizedQuery);
-      }).toList(growable: false);
-    } catch (_) {
-      return _stylists.where((stylist) {
-        final name = stylist.name.toLowerCase();
-        final specialization = stylist.specialization.toLowerCase();
-        final skills = stylist.skills.join(' ').toLowerCase();
-
-        return name.contains(normalizedQuery) ||
-            specialization.contains(normalizedQuery) ||
-            skills.contains(normalizedQuery);
-      }).toList(growable: false);
-    }
+  List<StylistModel> _parseList(dynamic data) {
+    return (data as List).map((j) => StylistModel.fromJson(j)).toList();
   }
 }

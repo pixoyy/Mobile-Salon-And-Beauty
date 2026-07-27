@@ -1,5 +1,4 @@
-import 'dart:convert';
-import 'dart:typed_data';
+import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
 import 'package:flutter/material.dart';
@@ -19,7 +18,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
   late TextEditingController nameController;
   late TextEditingController emailController;
   late TextEditingController phoneController;
-  Uint8List? _pickedImageBytes;
+  String? _pickedImagePath;
   String? _pickedImageName;
   bool _isSaving = false;
 
@@ -30,9 +29,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final user = AuthSession.currentUser;
 
     nameController = TextEditingController(text: user?.name ?? '');
-
     emailController = TextEditingController(text: user?.email ?? '');
-
     phoneController = TextEditingController(text: user?.phone ?? '');
   }
 
@@ -48,7 +45,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
     final result = await FilePicker.platform.pickFiles(
       type: FileType.image,
       allowMultiple: false,
-      withData: true,
     );
 
     if (result == null || result.files.isEmpty) {
@@ -56,9 +52,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     final file = result.files.single;
-    final bytes = file.bytes;
+    final path = file.path;
 
-    if (bytes == null) {
+    if (path == null) {
       return;
     }
 
@@ -67,7 +63,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
     }
 
     setState(() {
-      _pickedImageBytes = bytes;
+      _pickedImagePath = path;
       _pickedImageName = file.name;
     });
   }
@@ -79,25 +75,27 @@ class _EditProfilePageState extends State<EditProfilePage> {
       return;
     }
 
-    final updatedUser = currentUser.copyWith(
-      name: nameController.text.trim(),
-      email: emailController.text.trim(),
-      phone: phoneController.text.trim(),
-      imageUrl: _pickedImageBytes == null
-          ? currentUser.imageUrl
-          : 'base64:${base64Encode(_pickedImageBytes!)}',
-    );
-
     setState(() {
       _isSaving = true;
     });
 
     try {
-      await UserRepository().updateProfile(updatedUser);
+      await UserRepository().updateProfile(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        phone: phoneController.text.trim(),
+        avatarPath: _pickedImagePath,
+      );
 
       if (!mounted) {
         return;
       }
+
+      AuthSession.currentUser = currentUser.copyWith(
+        name: nameController.text.trim(),
+        email: emailController.text.trim(),
+        phone: phoneController.text.trim(),
+      );
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -139,9 +137,9 @@ class _EditProfilePageState extends State<EditProfilePage> {
   Widget build(BuildContext context) {
     final user = AuthSession.currentUser;
 
-    final avatarImage = _pickedImageBytes != null
-      ? MemoryImage(_pickedImageBytes!)
-      : profileImageProvider(user?.imageUrl);
+    final avatarImage = _pickedImagePath != null
+        ? FileImage(File(_pickedImagePath!)) as ImageProvider<Object>
+        : profileImageProvider(user?.imageUrl);
 
     final initial = user?.name.toString().isNotEmpty == true
         ? user!.name[0].toUpperCase()
@@ -195,7 +193,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
       bottomNavigationBar: Container(
         padding: const EdgeInsets.fromLTRB(20, 14, 20, 24),
         decoration: BoxDecoration(
-          // color: Colors.white,
           boxShadow: [
             BoxShadow(
               color: Colors.black.withOpacity(0.05),

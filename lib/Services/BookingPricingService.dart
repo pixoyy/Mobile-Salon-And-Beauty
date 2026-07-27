@@ -1,66 +1,60 @@
-import 'package:salon_and_beauty/Models/ServiceModel.dart';
-import 'package:salon_and_beauty/Models/PaymentModel.dart';
 import 'package:salon_and_beauty/Models/DiscountModel.dart';
-import 'package:salon_and_beauty/Repositories/DiscountRepository.dart';
+import 'package:salon_and_beauty/Models/PaymentModel.dart';
+import 'package:salon_and_beauty/Models/ServiceModel.dart';
 
 class PricingResult {
-  PricingResult({required this.payment, this.appliedDiscount});
+  const PricingResult({
+    required this.payment,
+    this.appliedDiscount,
+  });
 
   final PaymentModel payment;
   final Discount? appliedDiscount;
 }
 
 class BookingPricingService {
-  BookingPricingService._();
-
-  /// Calculate pricing for given services and optional discounts list.
-  ///
-  /// Policy: auto-apply the available discount with the highest `minSpend`
-  /// that does not exceed the subtotal, then cap the discount amount.
-  static Future<PricingResult> calculate(
-    List<ServiceModel> services, {
-    DateTime? bookingDate,
-    List<Discount>? discounts,
+  static Future<PricingResult> calculate({
+    required List<ServiceModel> services,
+    required DateTime bookingDate,
+    required List<Discount> discounts,
   }) async {
-    final int subtotal = services.fold<int>(0, (s, item) => s + item.price);
+    final subtotal = services.fold<int>(0, (sum, s) => sum + s.price);
 
-    final List<Discount> pool = discounts ?? await DiscountRepository().getAllDiscounts();
+    final activeDiscounts = discounts.where(
+      (d) =>
+          !bookingDate.isBefore(d.startDate) &&
+          !bookingDate.isAfter(d.endDate),
+    );
 
-    Discount? best;
-    int bestMinSpend = -1;
-    int bestAmount = 0;
+    final eligible = activeDiscounts
+        .where((d) => d.minSpend <= subtotal)
+        .toList(growable: false);
 
-    for (final d in pool) {
-      if (subtotal < d.minSpend) continue;
-
-      final int computed = ((subtotal * d.percent) / 100).round();
-      final int capped = computed > d.maxAmount ? d.maxAmount : computed;
-
-      final bool isBetter = d.minSpend > bestMinSpend ||
-          (d.minSpend == bestMinSpend && capped > bestAmount);
-
-      if (isBetter) {
-        bestMinSpend = d.minSpend;
-        bestAmount = capped;
-        best = d;
-      }
-    }
-
-    if (best == null) {
+    if (eligible.isEmpty) {
       return PricingResult(
         payment: PaymentModel.fromSubtotal(subtotal: subtotal),
-        appliedDiscount: null,
       );
     }
 
-    final int discountAmount = bestAmount;
-    return PricingResult(
-      payment: PaymentModel.fromSubtotal(
-        subtotal: subtotal,
-        discountPercentage: best.percent.toDouble(),
-        discountAmount: discountAmount,
-      ),
-      appliedDiscount: best,
+    eligible.sort((a, b) {
+      final cmp = b.minSpend.compareTo(a.minSpend);
+      if (cmp != 0) return cmp;
+      final aAmount = (subtotal * a.percent / 100).round();
+      final bAmount = (subtotal * b.percent / 100).round();
+      return bAmount.compareTo(aAmount);
+    });
+
+    final best = eligible.first;
+    final rawDiscount = (subtotal * best.percent / 100).round();
+    final discountAmount =
+        rawDiscount > best.maxAmount ? best.maxAmount : rawDiscount;
+
+    final payment = PaymentModel.fromSubtotal(
+      subtotal: subtotal,
+      discountPercentage: best.percent.toDouble(),
+      discountAmount: discountAmount,
     );
+
+    return PricingResult(payment: payment, appliedDiscount: best);
   }
 }

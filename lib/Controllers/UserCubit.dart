@@ -51,19 +51,17 @@ class UserCubit extends Cubit<UserState> {
     required String name,
     required String email,
     required String phone,
+    String? avatarPath,
   }) async {
     try {
       emit(UserLoading());
 
-      final currentUser = await repository.getProfile();
-
-      final updatedUser = currentUser.copyWith(
+      final result = await repository.updateProfile(
         name: name,
         email: email,
         phone: phone,
+        avatarPath: avatarPath,
       );
-
-      final result = await repository.updateProfile(updatedUser);
 
       emit(UserLoaded(result));
     } catch (e) {
@@ -74,6 +72,7 @@ class UserCubit extends Cubit<UserState> {
   Future<void> changePassword({
     required String oldPassword,
     required String newPassword,
+    required String newPasswordConfirmation,
   }) async {
     try {
       emit(ChangePasswordLoading());
@@ -81,6 +80,7 @@ class UserCubit extends Cubit<UserState> {
       await repository.changePassword(
         oldPassword: oldPassword,
         newPassword: newPassword,
+        newPasswordConfirmation: newPasswordConfirmation,
       );
 
       emit(ChangePasswordSuccess());

@@ -49,6 +49,18 @@ class ServiceModel {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'category': category,
+      'description': description,
+      'duration_minutes': durationMinutes,
+      'price': price,
+      'is_popular': isPopular,
+    };
+  }
+
   factory ServiceModel.fromMap(Map<String, dynamic> map) {
     return ServiceModel(
       id: map['id']?.toString() ?? '',
@@ -61,10 +73,24 @@ class ServiceModel {
     );
   }
 
+  factory ServiceModel.fromJson(Map<String, dynamic> json) {
+    return ServiceModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      category: json['category']?.toString() ?? '',
+      description: json['description']?.toString() ?? '',
+      durationMinutes: _toInt(json['duration_minutes']),
+      price: _toInt(json['price']),
+      isPopular: _toBool(json['is_popular']),
+    );
+  }
+
   static int _toInt(dynamic value) {
     if (value is int) return value;
     if (value is double) return value.round();
-    return int.tryParse(value?.toString() ?? '') ?? 0;
+    final parsed = double.tryParse(value?.toString() ?? '');
+    if (parsed != null) return parsed.round();
+    return 0;
   }
 
   static bool _toBool(dynamic value) {
