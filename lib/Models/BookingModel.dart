@@ -135,32 +135,35 @@ class BookingModel {
   }
 
   factory BookingModel.fromJson(Map<String, dynamic> json) {
-    final dynamic rawServiceIds = json['serviceIds'] ?? const <dynamic>[];
-    final DateTime? parsedDateTime = _tryParseDateTime(
-      json['bookingDateTime']?.toString(),
-    );
+    final List<String> parsedServiceIds = () {
+      final items = json['items'];
+      if (items is List && items.isNotEmpty) {
+        return items.map((e) => e['service_id']?.toString() ?? '').toList();
+      }
+      final raw = json['serviceIds'] ?? json['service_ids'];
+      if (raw is List) {
+        return raw.map((e) => e.toString()).toList();
+      }
+      return <String>[];
+    }();
 
     return BookingModel(
       id: json['id']?.toString() ?? '',
-      customerId: json['customerId']?.toString() ?? '',
-      stylistId: json['stylistId']?.toString() ?? '',
-      serviceIds: rawServiceIds is List
-          ? rawServiceIds.map((item) => item.toString()).toList()
-          : const <String>[],
-      bookingDate: _tryParseDate(json['bookingDate']?.toString()) ??
-          (parsedDateTime != null ? _dateOnly(parsedDateTime) : DateTime(1970)),
-      bookingTime: json['bookingTime']?.toString() ??
-          (parsedDateTime != null ? _formatTime(parsedDateTime) : '00:00'),
-      notes: json['notes']?.toString() ?? json['note']?.toString(),
-      subtotal: _toInt(json['subtotal']) ?? _toInt(json['totalPrice']) ?? 0,
-      discount: _toInt(json['discount']) ?? 0,
-      totalPrice: _toInt(json['totalPrice']),
+      customerId: json['customer_id']?.toString() ?? json['customerId']?.toString() ?? '',
+      stylistId: json['stylist'] is Map
+          ? json['stylist']['id']?.toString() ?? ''
+          : (json['stylist_id']?.toString() ?? json['stylistId']?.toString() ?? ''),
+      serviceIds: parsedServiceIds,
+      bookingDate: _tryParseDate(json['booking_date']?.toString()),
+      bookingTime: json['booking_time']?.toString(),
+      notes: json['notes']?.toString(),
+      subtotal: _toInt(json['subtotal']),
+      discount: _toInt(json['discount_amount']),
+      totalPrice: _toInt(json['total_price'] ?? json['totalPrice']),
       status: BookingStatusX.fromValue(
         json['status']?.toString() ?? BookingStatus.upcoming.value,
       ),
-      createdAt: _tryParseDateTime(json['createdAt']?.toString()) ??
-          parsedDateTime ??
-          DateTime(1970),
+      createdAt: _tryParseDateTime(json['created_at']?.toString()) ?? DateTime(1970),
     );
   }
 

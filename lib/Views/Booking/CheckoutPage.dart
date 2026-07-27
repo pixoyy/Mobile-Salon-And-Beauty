@@ -78,10 +78,10 @@ class _CheckoutPageState extends State<CheckoutPage> {
                 padding: const EdgeInsets.all(20),
                 children: [
                   Text(
-                    AuthSession.activeUser.name,
+                    AuthSession.currentUser?.name ?? '',
                     style: const TextStyle(fontWeight: FontWeight.bold),
                   ),
-                  Text(AuthSession.activeUser.email),
+                  Text(AuthSession.currentUser?.email ?? ''),
 
                   const SizedBox(height: 20),
 

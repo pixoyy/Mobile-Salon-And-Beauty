@@ -1,28 +1,34 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:salon_and_beauty/Models/DashboardData.dart';
 import 'package:salon_and_beauty/Repositories/DashboardRepository.dart';
 
-enum DashboardStatus { initial, loading, loaded }
+enum DashboardStatus { initial, loading, loaded, error }
 
 class DashboardState {
   const DashboardState({
     required this.status,
-    this.snapshot,
+    this.data,
+    this.error,
   });
 
   const DashboardState.initial()
       : status = DashboardStatus.initial,
-        snapshot = null;
+        data = null,
+        error = null;
 
   final DashboardStatus status;
-  final DashboardSnapshot? snapshot;
+  final DashboardData? data;
+  final String? error;
 
   DashboardState copyWith({
     DashboardStatus? status,
-    DashboardSnapshot? snapshot,
+    DashboardData? data,
+    String? error,
   }) {
     return DashboardState(
       status: status ?? this.status,
-      snapshot: snapshot ?? this.snapshot,
+      data: data ?? this.data,
+      error: error,
     );
   }
 }
@@ -34,10 +40,17 @@ class DashboardCubit extends Cubit<DashboardState> {
 
   Future<void> loadDashboard() async {
     emit(state.copyWith(status: DashboardStatus.loading));
-    await Future<void>.delayed(const Duration(milliseconds: 250));
-    emit(DashboardState(
-      status: DashboardStatus.loaded,
-      snapshot: _repository.getSnapshot(),
-    ));
+    try {
+      final data = await _repository.getDashboard();
+      emit(DashboardState(
+        status: DashboardStatus.loaded,
+        data: data,
+      ));
+    } catch (e) {
+      emit(DashboardState(
+        status: DashboardStatus.error,
+        error: e.toString(),
+      ));
+    }
   }
 }

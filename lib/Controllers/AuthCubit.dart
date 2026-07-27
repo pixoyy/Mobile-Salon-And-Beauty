@@ -1,7 +1,8 @@
 import 'package:flutter_bloc/flutter_bloc.dart';
-import 'package:salon_and_beauty/Support/AuthSession.dart';
+import 'package:salon_and_beauty/Models/LoginResult.dart';
 import 'package:salon_and_beauty/Models/UserModel.dart';
 import 'package:salon_and_beauty/Repositories/AuthRepository.dart';
+import 'package:salon_and_beauty/Support/AuthSession.dart';
 
 enum AuthStatus { initial, loading, authenticated, failure }
 
@@ -45,42 +46,41 @@ class AuthCubit extends Cubit<AuthState> {
   }) async {
     emit(const AuthState(status: AuthStatus.loading));
 
-    await Future<void>.delayed(const Duration(milliseconds: 450));
+    try {
+      final LoginResult result = await _repository.validateLogin(
+        identifier: identifier,
+        password: password,
+      );
 
-    final user = await _repository.validateLogin(
-      identifier: identifier,
-      password: password,
-    );
-
-    if (user != null) {
-
-      // SAVE SESSION (persisted by repository)
-      AuthSession.currentUser = user;
+      if (result.isSuccess) {
+        await AuthSession.persistLogin(result.token!, result.user!);
+        emit(
+          AuthState(
+            status: AuthStatus.authenticated,
+            currentUser: result.user,
+          ),
+        );
+        return;
+      }
 
       emit(
         AuthState(
-          status: AuthStatus.authenticated,
-          currentUser: user,
+          status: AuthStatus.failure,
+          errorMessage: result.error ?? 'Email/username atau password tidak valid.',
         ),
       );
-
-      return;
+    } catch (e) {
+      emit(
+        AuthState(
+          status: AuthStatus.failure,
+          errorMessage: 'Terjadi kesalahan. Silakan coba lagi.',
+        ),
+      );
     }
-
-    emit(
-      const AuthState(
-        status: AuthStatus.failure,
-        errorMessage: 'Email/username atau password tidak valid.',
-      ),
-    );
   }
 
   Future<void> logout() async {
-
-    // CLEAR SESSION
-    AuthSession.logout();
-
-    // RESET STATE
+    await _repository.logout();
     emit(const AuthState.initial());
   }
 }

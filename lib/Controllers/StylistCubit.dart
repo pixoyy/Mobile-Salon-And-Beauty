@@ -95,11 +95,11 @@ class StylistListCubit extends Cubit<StylistListState> {
     }
   }
 
-  Future<void> searchStylists(String query) async {
+  Future<void> searchStylists(String query, {double? minRating}) async {
     final normalizedQuery = query.trim();
 
     try {
-      final stylists = await _repository.searchStylists(normalizedQuery);
+      final stylists = await _repository.searchStylists(normalizedQuery, minRating: minRating);
       emit(state.copyWith(
         status: StylistStatus.success,
         stylists: stylists,
@@ -125,14 +125,6 @@ class StylistDetailCubit extends Cubit<StylistDetailState> {
 
     try {
       final stylist = await _repository.getStylistById(id);
-      if (stylist == null) {
-        emit(state.copyWith(
-          status: StylistStatus.failure,
-          errorMessage: 'Stylist tidak ditemukan.',
-        ));
-        return;
-      }
-
       emit(state.copyWith(
         status: StylistStatus.success,
         stylist: stylist,

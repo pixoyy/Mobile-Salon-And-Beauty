@@ -41,6 +41,16 @@ class StylistReview {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'customer_name': customerName,
+      'rating': rating,
+      'comment': comment,
+      'created_at': date.toIso8601String(),
+    };
+  }
+
   factory StylistReview.fromMap(Map<String, dynamic> map) {
     return StylistReview(
       id: map['id']?.toString() ?? '',
@@ -48,6 +58,16 @@ class StylistReview {
       rating: _toDouble(map['rating']),
       comment: map['comment']?.toString() ?? '',
       date: _toDateTime(map['date']),
+    );
+  }
+
+  factory StylistReview.fromJson(Map<String, dynamic> json) {
+    return StylistReview(
+      id: json['id']?.toString() ?? '',
+      customerName: json['customer_name']?.toString() ?? '',
+      rating: _toDouble(json['rating']),
+      comment: json['comment']?.toString() ?? '',
+      date: _toDateTime(json['created_at']),
     );
   }
 
@@ -130,6 +150,21 @@ class StylistModel {
     };
   }
 
+  Map<String, dynamic> toJson() {
+    return {
+      'id': id,
+      'name': name,
+      'specialization': specialization,
+      'rating': rating,
+      'review_count': reviewCount,
+      'experience_years': experienceYears,
+      'photo_url': photoUrl,
+      'skills': skills,
+      'reviews': reviews.map((r) => r.toJson()).toList(),
+      'bio': bio,
+    };
+  }
+
   factory StylistModel.fromMap(Map<String, dynamic> map) {
     final String skillsRaw = map['skills']?.toString() ?? '[]';
     final String reviewsRaw = map['reviews']?.toString() ?? '[]';
@@ -169,6 +204,26 @@ class StylistModel {
       skills: skills,
       reviews: reviews,
       bio: map['bio']?.toString() ?? '',
+    );
+  }
+
+  factory StylistModel.fromJson(Map<String, dynamic> json) {
+    final List<dynamic> rawSkills = json['skills'] is List ? json['skills'] : [];
+    final List<dynamic> rawReviews = json['reviews'] is List ? json['reviews'] : [];
+
+    return StylistModel(
+      id: json['id']?.toString() ?? '',
+      name: json['name']?.toString() ?? '',
+      specialization: json['specialization']?.toString() ?? '',
+      rating: _toDouble(json['rating']),
+      reviewCount: _toInt(json['review_count']),
+      experienceYears: _toInt(json['experience_years']),
+      photoUrl: json['photo_url']?.toString() ?? '',
+      skills: rawSkills.map((e) => e.toString()).toList(),
+      reviews: rawReviews
+          .map((e) => StylistReview.fromJson(Map<String, dynamic>.from(e)))
+          .toList(),
+      bio: json['bio']?.toString() ?? '',
     );
   }
 

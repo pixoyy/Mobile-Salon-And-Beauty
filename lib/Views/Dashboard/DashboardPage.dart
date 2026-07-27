@@ -3,10 +3,9 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:salon_and_beauty/Controllers/DashboardCubit.dart';
-import 'package:salon_and_beauty/Database/DummyData/DummyDiscounts.dart';
-import 'package:salon_and_beauty/Database/DummyData/DummyStylists.dart';
 import 'package:salon_and_beauty/Models/BookingModel.dart';
 import 'package:salon_and_beauty/Models/DiscountModel.dart';
+import 'package:salon_and_beauty/Models/ServiceModel.dart';
 import 'package:salon_and_beauty/Models/StylistModel.dart';
 import 'package:salon_and_beauty/Repositories/BookingRepository.dart';
 import 'package:salon_and_beauty/Repositories/DashboardRepository.dart';
@@ -27,8 +26,7 @@ class DashboardPage extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocProvider(
       create: (_) =>
-          DashboardCubit(const DashboardRepository())..loadDashboard(),
-
+          DashboardCubit(DashboardRepository())..loadDashboard(),
       child: const _DashboardView(),
     );
   }
@@ -50,7 +48,7 @@ class _DiscountSliderState extends State<_DiscountSlider> {
 
   double _currentPage = 0;
 
-  List<Discount> _discounts = List<Discount>.from(DummyDiscounts.data);
+  List<Discount> _discounts = [];
 
   @override
   void initState() {
@@ -403,12 +401,11 @@ class _DashboardView extends StatelessWidget {
   Widget build(BuildContext context) {
     return BlocBuilder<DashboardCubit, DashboardState>(
       builder: (context, state) {
-        final snapshot = state.snapshot;
-        final customerName = AuthSession.activeUser.name.isNotEmpty
-            ? AuthSession.activeUser.name
-            : (snapshot?.customer.name ?? 'Customer');
-        final greeting = snapshot?.customer.greeting ?? 'Halo,';
-        final profileImage = profileImageProvider(AuthSession.activeUser.imageUrl);
+        final data = state.data;
+        final customerName = AuthSession.currentUser?.name.isNotEmpty == true
+            ? AuthSession.currentUser!.name
+            : 'Customer';
+        final greeting = data?.greeting ?? 'Halo,';
 
         return Scaffold(
           backgroundColor: const Color(0xFFF8F3EF),
@@ -434,25 +431,7 @@ class _DashboardView extends StatelessWidget {
                   ),
                   child: ClipRRect(
                     borderRadius: BorderRadius.circular(18),
-                    child: profileImage != null
-                        ? Image(
-                            image: profileImage,
-                            fit: BoxFit.cover,
-                            width: 52,
-                            height: 52,
-                          )
-                        : Center(
-                            child: Text(
-                              customerName.isNotEmpty
-                                  ? customerName[0].toUpperCase()
-                                  : 'A',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 30,
-                              ),
-                            ),
-                          ),
+                    child: _buildProfileImage(customerName),
                   ),
                 ),
 
@@ -506,73 +485,12 @@ class _DashboardView extends StatelessWidget {
             child: ListView(
               padding: const EdgeInsets.fromLTRB(20, 12, 20, 30),
               children: [
-                // Container(
-                //   padding: const EdgeInsets.all(18),
-                //   decoration: BoxDecoration(
-                //     gradient: const LinearGradient(
-                //       begin: Alignment.topLeft,
-                //       end: Alignment.bottomRight,
-                //       colors: [Color(0xFFFFFFFF), Color(0xFFFDF7F3)],
-                //     ),
-                //     borderRadius: BorderRadius.circular(28),
-                //     border: Border.all(color: AppColors.border),
-                //     boxShadow: [
-                //       BoxShadow(
-                //         color: Colors.black.withOpacity(0.04),
-                //         blurRadius: 18,
-                //         offset: const Offset(0, 8),
-                //       ),
-                //     ],
-                //   ),
-                //   child: Row(
-                //     children: [
-                //       Container(
-                //         width: 56,
-                //         height: 56,
-                //         decoration: BoxDecoration(
-                //           color: AppColors.primary.withOpacity(0.1),
-                //           borderRadius: BorderRadius.circular(18),
-                //         ),
-                //         child: const Icon(
-                //           Icons.spa_rounded,
-                //           color: AppColors.primary,
-                //           size: 30,
-                //         ),
-                //       ),
-                //       const SizedBox(width: 14),
-                //       Expanded(
-                //         child: Column(
-                //           crossAxisAlignment: CrossAxisAlignment.start,
-                //           children: [
-                //             Text(
-                //               'Selamat datang di Glamora',
-                //               style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                //                 fontWeight: FontWeight.w800,
-                //               ),
-                //             ),
-                //             const SizedBox(height: 4),
-                //             Text(
-                //               'Pantau promo, stylist, dan booking terbaru dari dashboard ini.',
-                //               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                //                 color: AppColors.mutedText,
-                //                 height: 1.35,
-                //               ),
-                //             ),
-                //           ],
-                //         ),
-                //       ),
-                //     ],
-                //   ),
-                // ),
-
-                // const SizedBox(height: 22),
-
                 /// PROMO
                 const _DiscountSlider(),
 
                 const SizedBox(height: 26),
 
-                /// QUICK ACTION
+                /// RECOMMENDED STYLIST
                 Text(
                   'Recommend Stylist',
 
@@ -583,7 +501,7 @@ class _DashboardView extends StatelessWidget {
 
                 const SizedBox(height: 14),
 
-                _StylistList(stylists: DummyStylists.data),
+                _StylistList(stylists: data?.recommendedStylists ?? []),
 
                 const SizedBox(height: 26),
 
@@ -604,6 +522,33 @@ class _DashboardView extends StatelessWidget {
           ),
         );
       },
+    );
+  }
+
+  Widget _buildProfileImage(String name) {
+    final image = profileImageProvider(AuthSession.currentUser?.imageUrl);
+    if (image != null) {
+      return Image(
+        image: image,
+        fit: BoxFit.cover,
+        width: 52,
+        height: 52,
+        errorBuilder: (_, __, ___) => _avatarFallback(name),
+      );
+    }
+    return _avatarFallback(name);
+  }
+
+  Widget _avatarFallback(String name) {
+    return Center(
+      child: Text(
+        name.isNotEmpty ? name[0].toUpperCase() : 'A',
+        style: const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 30,
+        ),
+      ),
     );
   }
 }
@@ -884,32 +829,32 @@ class _NearestBookingSectionState extends State<_NearestBookingSection> {
       ]);
 
       final List<BookingModel> bookings = results[0] as List<BookingModel>;
-      final List<dynamic> stylists = results[1] as List<dynamic>;
-      final List<dynamic> services = results[2] as List<dynamic>;
+      final List<StylistModel> stylists = results[1] as List<StylistModel>;
+      final List<ServiceModel> services = results[2] as List<ServiceModel>;
 
       final BookingModel? nearestBooking = _selectNearestBooking(bookings);
       if (nearestBooking == null) {
         return null;
       }
 
-      final Map<String, dynamic> stylistById = {
-        for (final stylist in stylists) stylist.id as String: stylist,
+      final Map<String, StylistModel> stylistById = {
+        for (final stylist in stylists) stylist.id: stylist,
       };
       final Map<String, String> serviceNameById = {
         for (final service in services)
-          service.id as String: service.name as String,
+          service.id: service.name,
       };
 
-      final dynamic stylist = stylistById[nearestBooking.stylistId];
+      final StylistModel? stylist = stylistById[nearestBooking.stylistId];
       final List<String> serviceNames = nearestBooking.serviceIds
           .map((id) => serviceNameById[id] ?? id)
           .toList(growable: false);
 
       return _NearestBookingCardData(
         booking: nearestBooking,
-        stylistName: stylist?.name as String? ?? nearestBooking.stylistId,
+        stylistName: stylist?.name ?? nearestBooking.stylistId,
         stylistPhotoUrl:
-            stylist?.photoUrl as String? ??
+            stylist?.photoUrl ??
             'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=800',
         serviceNames: serviceNames,
       );
